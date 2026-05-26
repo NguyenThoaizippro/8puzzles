@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>8 Puzzle - Trình bày thuật toán</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <h1>8 PUZZLE</h1>
+    <p class="subtitle">Trình bày thuật toán tìm kiếm</p>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-algo="bfs">BFS</button>
+    <button class="tab" data-algo="dfs">DFS</button>
+    <button class="tab" data-algo="ucs">UCS</button>
+    <button class="tab" data-algo="greedy">Greedy</button>
+  </nav>
+
+  <section class="config-panel">
+    <div class="board-block">
+      <div class="board-head">
+        <span class="board-title">START</span>
+        <div class="board-actions">
+          <button class="btn btn-ghost" id="edit-start">Sửa</button>
+          <button class="btn btn-ghost" id="reset-start">Mặc định</button>
+        </div>
+      </div>
+      <div class="board" id="board-start"></div>
+    </div>
+
+    <div class="board-block">
+      <div class="board-head">
+        <span class="board-title">GOAL</span>
+        <div class="board-actions">
+          <button class="btn btn-ghost" id="edit-goal">Sửa</button>
+          <button class="btn btn-ghost" id="reset-goal">Mặc định</button>
+        </div>
+      </div>
+      <div class="board" id="board-goal"></div>
+    </div>
+
+    <div class="info-block">
+      <div class="info-row">
+        <span class="label">Thuật toán</span>
+        <span class="value" id="info-algo">BFS</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Quy ước action</span>
+        <span class="value">L / R / U / D ( ô trống di chuyển )</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Thứ tự mở rộng</span>
+        <span class="value">L → R → U → D</span>
+      </div>
+      <div class="info-row" id="info-formula-row">
+        <span class="label">Hàm đánh giá</span>
+        <span class="value" id="info-formula">—</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="controls">
+    <button class="btn btn-primary" id="btn-run">Chạy thuật toán</button>
+    <button class="btn" id="btn-step">Bước kế</button>
+    <button class="btn" id="btn-auto">Tự động</button>
+    <button class="btn" id="btn-pause" disabled>Tạm dừng</button>
+    <button class="btn btn-ghost" id="btn-reset">Đặt lại</button>
+    <label class="speed">
+      Tốc độ
+      <input type="range" id="speed" min="200" max="2000" step="100" value="900" />
+      <span id="speed-val">900ms</span>
+    </label>
+  </section>
+
+  <section class="status">
+    <div class="status-cell"><span>Bước</span><b id="stat-step">0</b></div>
+    <div class="status-cell"><span>Frontier</span><b id="stat-frontier">0</b></div>
+    <div class="status-cell"><span>Reached</span><b id="stat-reached">0</b></div>
+    <div class="status-cell"><span>Trạng thái</span><b id="stat-status">—</b></div>
+  </section>
+
+  <section class="trace-section">
+    <div class="trace-head">
+      <h2>Bảng truy vết</h2>
+      <span class="hint">Mỗi dòng = 1 vòng while ( pop 1 node và in cả 4 action )</span>
+    </div>
+    <div class="table-wrap">
+      <table class="trace-table" id="trace-table">
+        <thead>
+          <tr>
+            <th class="col-step">#</th>
+            <th class="col-node">Node ( đang xét )</th>
+            <th class="col-frontier">Frontier  ( node vừa pop &mdash; tô đỏ )</th>
+            <th class="col-reached">Reached</th>
+          </tr>
+        </thead>
+        <tbody id="trace-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="solution-section" id="solution-section" hidden>
+    <h2>Đường đi tới đích</h2>
+    <div class="solution-meta">
+      <span id="sol-len">—</span>
+      <span id="sol-actions">—</span>
+    </div>
+    <div class="solution-strip" id="solution-strip"></div>
+    <div class="playback">
+      <button class="btn" id="btn-play-path">Phát lại đường đi</button>
+      <span class="playback-info" id="playback-info"></span>
+    </div>
+  </section>
+</div>
+
+<script src="core.js"></script>
+<script src="algorithms.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
