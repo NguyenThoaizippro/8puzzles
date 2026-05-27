@@ -339,7 +339,7 @@ function renderSetNotation(item, opts = {}) {
     const eq = document.createElement('span'); eq.className = 'sep';
     eq.textContent = `   h = ${item.h}`;
     node.appendChild(eq);
-  } else if (state.algo === 'astar' && item.g !== undefined && item.h !== undefined) {
+  } else if ((state.algo === 'astar' || state.algo === 'idastar') && item.g !== undefined && item.h !== undefined) {
     const eq = document.createElement('span'); eq.className = 'sep';
     eq.textContent = `   g = ${item.g}, h = ${item.h} (f = ${item.g + item.h})`;
     node.appendChild(eq);
@@ -384,6 +384,8 @@ function renderStatus() {
   else {
     if (state.algo === 'ids' && last && last.limit !== undefined) {
       stat.textContent = `đang chạy (d=${last.limit})`;
+    } else if (state.algo === 'idastar' && last && last.limit !== undefined) {
+      stat.textContent = `đang chạy (f=${last.limit})`;
     } else {
       stat.textContent = 'đang chạy';
     }

@@ -612,4 +612,125 @@ function* astar(start, goal) {
   };
 }
 
-const ALGORITHMS = { bfs, dfs, ids, ucs, greedy, astar };
+/* ---------- IDA* ---------- */
+function* idastar(start, goal) {
+  let nextId = 0;
+  let iter = 0;
+
+  const startH = manhattanDistance(start, goal);
+  let limit = startH; // Initial limit is f(start) = 0 + h(start)
+
+  for (let cycle = 0; cycle < 100; cycle++) {
+    const startNode = makeNode(start, null, null, 0, 0, startH, nextId++);
+    const frontier = [startNode];
+    let nextLimit = Infinity;
+
+    while (frontier.length > 0) {
+      iter++;
+      const frontierBefore = snapshotFrontier(frontier);
+      const node = frontier.pop();                       // LIFO
+      const poppedIndex = frontier.length;               // top of stack
+      const children = [];
+
+      const reachedAfter = getPathKeys(node);
+      const nodeF = node.depth + node.h; // f(n) = g(n) + h(n)
+
+      if (statesEqual(node.state, goal)) {
+        yield {
+          iter, popped: snapshotPopped(node), poppedIndex,
+          children: [], frontierBefore,
+          frontierAfter: snapshotFrontier(frontier),
+          reachedAfter,
+          done: true, success: true, goalNode: node,
+          limit,
+        };
+        return;
+      }
+
+      if (nodeF > limit) {
+        if (nodeF < nextLimit) nextLimit = nodeF;
+        yield {
+          iter, popped: snapshotPopped(node), poppedIndex,
+          children: [], frontierBefore,
+          frontierAfter: snapshotFrontier(frontier),
+          reachedAfter,
+          done: false, success: false, goalNode: null,
+          limit,
+          expansionMessage: `Không mở rộng: f(n) = ${nodeF} > limit = ${limit}`,
+        };
+      } else if (isCycle(node)) {
+        yield {
+          iter, popped: snapshotPopped(node), poppedIndex,
+          children: [], frontierBefore,
+          frontierAfter: snapshotFrontier(frontier),
+          reachedAfter,
+          done: false, success: false, goalNode: null,
+          limit,
+          expansionMessage: `Không mở rộng: Tạo chu trình (trùng với tổ tiên)`,
+        };
+      } else {
+        // Expand node
+        for (const action of ACTION_ORDER) {
+          const ns = applyAction(node.state, action);
+          if (ns === null) {
+            children.push({ action, state: null, status: 'invalid', reason: 'không thể di chuyển', parentId: node.id });
+            continue;
+          }
+          const k = stateKey(ns);
+          const inPath = reachedAfter.includes(k);
+          const inFrontier = frontier.some(f => stateKey(f.state) === k);
+          if (inPath || inFrontier) {
+            children.push({
+              action, state: ns, status: 'skipped',
+              reason: inPath ? 'đã trong reached' : 'đã trong frontier',
+              depth: node.depth + 1, parentId: node.id,
+            });
+            continue;
+          }
+          const childH = manhattanDistance(ns, goal);
+          const childNode = makeNode(ns, node, action, node.depth + 1, node.depth + 1, childH, nextId++);
+          frontier.push(childNode);
+          children.push({
+            action, state: ns, status: 'added', reason: 'thêm vào frontier',
+            node: childNode, depth: childNode.depth, id: childNode.id, parentId: node.id,
+            g: childNode.depth, h: childNode.h,
+          });
+        }
+
+        yield {
+          iter, popped: snapshotPopped(node), poppedIndex,
+          children, frontierBefore,
+          frontierAfter: snapshotFrontier(frontier),
+          reachedAfter,
+          done: false, success: false, goalNode: null,
+          limit,
+        };
+      }
+    }
+
+    // If DFS completed and no next limit was recorded, then goal is not reachable
+    if (nextLimit === Infinity) {
+      yield {
+        iter: iter + 1, popped: null, poppedIndex: -1,
+        children: [], frontierBefore: [], frontierAfter: [],
+        reachedAfter: [],
+        done: true, success: false, goalNode: null,
+        limit,
+      };
+      return;
+    }
+
+    limit = nextLimit;
+  }
+
+  // Safety exit
+  yield {
+    iter: iter + 1, popped: null, poppedIndex: -1,
+    children: [], frontierBefore: [], frontierAfter: [],
+    reachedAfter: [],
+    done: true, success: false, goalNode: null,
+    limit,
+  };
+}
+
+const ALGORITHMS = { bfs, dfs, ids, ucs, greedy, astar, idastar };

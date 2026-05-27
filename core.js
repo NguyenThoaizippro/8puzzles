@@ -102,6 +102,7 @@ const PRESETS = {
   ucs: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
   greedy: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
   astar: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
+  idastar: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
 };
 
 const ALGO_META = {
@@ -111,4 +112,5 @@ const ALGO_META = {
   ucs: { name: 'UCS', formula: 'g( child ) = g( parent ) + số ô sai của child' },
   greedy: { name: 'Greedy', formula: 'h( n ) = Σ Manhattan |Δrow| + |Δcol|  ( trừ blank )' },
   astar: { name: 'A*', formula: 'f( n ) = g( n ) + h( n )  ( g = số ô sai cả blank, h = Manhattan )' },
+  idastar: { name: 'IDA*', formula: 'f( n ) = g( n ) + h( n )  ( g = depth, h = Manhattan, giới hạn theo f )' },
 };
