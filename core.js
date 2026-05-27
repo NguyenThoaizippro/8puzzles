@@ -1,22 +1,10 @@
-/* ============================================================
-   CORE — Puzzle state, actions, heuristics
-   ------------------------------------------------------------
-   - State: flat array of 9 numbers, 0 = ô trống.
-       index 0..8 = (row*3 + col), row,col ∈ {0,1,2}
-   - Action: 'L' | 'R' | 'U' | 'D'  → ô TRỐNG di chuyển.
-       L: blank.col-1  R: blank.col+1
-       U: blank.row-1  D: blank.row+1
-   - Misplaced: số ô non-blank không trùng vị trí goal.
-   - Manhattan: Σ |Δrow| + |Δcol|  cho mọi ô (trừ blank).
-============================================================ */
-
 const ACTION_ORDER = ['L', 'R', 'U', 'D'];
 
 const ACTION_DELTA = {
-  L: { dr: 0,  dc: -1 },
-  R: { dr: 0,  dc:  1 },
-  U: { dr: -1, dc:  0 },
-  D: { dr: 1,  dc:  0 },
+  L: { dr: 0, dc: -1 },
+  R: { dr: 0, dc: 1 },
+  U: { dr: -1, dc: 0 },
+  D: { dr: 1, dc: 0 },
 };
 
 function blankIndex(state) {
@@ -108,15 +96,17 @@ const GOAL_DEFAULT = [1, 2, 3, 4, 5, 6, 7, 8, 0];
 
 const PRESETS = {
   // Start: blank ở (1,1). Goal: blank ở (2,2). 2 bước: D, R.
-  bfs:    { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
-  dfs:    { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
-  ucs:    { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
+  bfs: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
+  dfs: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
+  ids: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
+  ucs: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
   greedy: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
 };
 
 const ALGO_META = {
-  bfs:    { name: 'BFS',    formula: 'Không có ( duyệt theo bề rộng, frontier = FIFO )' },
-  dfs:    { name: 'DFS',    formula: 'Không có ( duyệt theo chiều sâu, frontier = LIFO )' },
-  ucs:    { name: 'UCS',    formula: 'g( child ) = g( parent ) + số ô sai của child' },
+  bfs: { name: 'BFS', formula: 'Không có ( duyệt theo bề rộng, frontier = FIFO )' },
+  dfs: { name: 'DFS', formula: 'Không có ( duyệt theo chiều sâu, frontier = LIFO )' },
+  ids: { name: 'IDS', formula: 'Duyệt sâu dần ( DLS với limit = 0, 1, 2... )' },
+  ucs: { name: 'UCS', formula: 'g( child ) = g( parent ) + số ô sai của child' },
   greedy: { name: 'Greedy', formula: 'h( n ) = Σ Manhattan |Δrow| + |Δcol|  ( trừ blank )' },
 };

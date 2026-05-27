@@ -1,14 +1,10 @@
-/* ============================================================
-   APP — UI controller, step runner, render trace + playback.
-============================================================ */
-
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
 const state = {
   algo: 'bfs',
   start: PRESETS.bfs.start.slice(),
-  goal:  PRESETS.bfs.goal.slice(),
+  goal: PRESETS.bfs.goal.slice(),
   run: null,
   autoTimer: null,
   editMode: { start: false, goal: false },
@@ -25,7 +21,7 @@ function bindTabs() {
       state.algo = algo;
       $$('.tab').forEach(b => b.classList.toggle('active', b === btn));
       state.start = PRESETS[algo].start.slice();
-      state.goal  = PRESETS[algo].goal.slice();
+      state.goal = PRESETS[algo].goal.slice();
       state.editMode = { start: false, goal: false };
       resetRun();
       renderAll();
@@ -83,7 +79,7 @@ function validatePuzzle(arr) {
 
 function bindBoardEditors() {
   $('#edit-start').addEventListener('click', () => toggleEdit('start'));
-  $('#edit-goal').addEventListener('click',  () => toggleEdit('goal'));
+  $('#edit-goal').addEventListener('click', () => toggleEdit('goal'));
   $('#reset-start').addEventListener('click', () => {
     state.start = PRESETS[state.algo].start.slice();
     state.editMode.start = false;
@@ -270,11 +266,11 @@ function renderSetNotation(item, opts = {}) {
   const node = document.createElement('div');
   node.className = 'set-notation';
   const kind = opts.kind;
-  if (kind === 'popped')      node.classList.add('is-popped');
-  if (kind === 'added')       node.classList.add('is-added');
-  if (kind === 'goal')        node.classList.add('is-goal');
-  if (kind === 'skipped')     node.classList.add('is-skipped');
-  if (kind === 'just-added')  { node.classList.add('is-added', 'is-just-added'); }
+  if (kind === 'popped') node.classList.add('is-popped');
+  if (kind === 'added') node.classList.add('is-added');
+  if (kind === 'goal') node.classList.add('is-goal');
+  if (kind === 'skipped') node.classList.add('is-skipped');
+  if (kind === 'just-added') { node.classList.add('is-added', 'is-just-added'); }
 
   // Trường hợp invalid : không có grid, chỉ in dòng "action: invalid"
   if (item.status === 'invalid') {
@@ -360,9 +356,9 @@ function renderSetNotation(item, opts = {}) {
 function renderAll() {
   renderInfo();
   renderBoard('board-start', state.start, state.editMode.start);
-  renderBoard('board-goal',  state.goal,  state.editMode.goal);
+  renderBoard('board-goal', state.goal, state.editMode.goal);
   $('#edit-start').textContent = state.editMode.start ? 'Xong' : 'Sửa';
-  $('#edit-goal').textContent  = state.editMode.goal  ? 'Xong' : 'Sửa';
+  $('#edit-goal').textContent = state.editMode.goal ? 'Xong' : 'Sửa';
 
   renderStatus();
   renderTrace();
@@ -374,14 +370,21 @@ function renderStatus() {
   $('#stat-step').textContent = run ? run.steps.length : 0;
   const last = run && run.steps.length ? run.steps[run.steps.length - 1] : null;
   $('#stat-frontier').textContent = last ? last.frontierAfter.length : 0;
-  $('#stat-reached').textContent  = last ? last.reachedAfter.length  : 0;
+  $('#stat-reached').textContent = last ? last.reachedAfter.length : 0;
 
   const stat = $('#stat-status');
   stat.classList.remove('tag-success', 'tag-fail', 'tag-run');
   if (!run) { stat.textContent = '—'; }
   else if (run.finished && run.success) { stat.textContent = 'GOAL'; stat.classList.add('tag-success'); }
   else if (run.finished && !run.success) { stat.textContent = 'THẤT BẠI'; stat.classList.add('tag-fail'); }
-  else { stat.textContent = 'đang chạy'; stat.classList.add('tag-run'); }
+  else {
+    if (state.algo === 'ids' && last && last.limit !== undefined) {
+      stat.textContent = `đang chạy (d=${last.limit})`;
+    } else {
+      stat.textContent = 'đang chạy';
+    }
+    stat.classList.add('tag-run');
+  }
 }
 
 /* ---------- LIVE FRONTIER PANEL — đã loại bỏ ( user yêu cầu ) ---------- */
@@ -445,24 +448,35 @@ function renderTrace() {
 
     const list = document.createElement('div');
     list.className = 'children-list';
-    step.children.forEach(ch => {
-      let kind = null, tag = null, tagText = null;
-      if (ch.status === 'added')   { kind = 'added';   tag = 'added';   tagText = 'THÊM'; }
-      if (ch.status === 'goal')    { kind = 'goal';    tag = 'goal';    tagText = 'GOAL'; }
-      if (ch.status === 'skipped') { kind = 'skipped'; tag = 'skipped'; tagText = 'BỎ QUA ( ' + (ch.reason || '') + ' )'; }
-      if (ch.status === 'invalid') { kind = null; }
-      const item = renderSetNotation({
-        state: ch.state,
-        action: ch.action,
-        depth: ch.depth,
-        id: ch.id,
-        parentId: ch.parentId,
-        g: ch.g,
-        h: ch.h,
-        status: ch.status,
-      }, { kind, tag, tagText });
-      list.appendChild(item);
-    });
+    if (step.expansionMessage) {
+      const msg = document.createElement('div');
+      msg.style.color = 'var(--bad)';
+      msg.style.fontWeight = 'bold';
+      msg.style.fontSize = '13px';
+      msg.style.marginTop = '4px';
+      msg.style.fontStyle = 'italic';
+      msg.textContent = step.expansionMessage;
+      list.appendChild(msg);
+    } else {
+      step.children.forEach(ch => {
+        let kind = null, tag = null, tagText = null;
+        if (ch.status === 'added') { kind = 'added'; tag = 'added'; tagText = 'THÊM'; }
+        if (ch.status === 'goal') { kind = 'goal'; tag = 'goal'; tagText = 'GOAL'; }
+        if (ch.status === 'skipped') { kind = 'skipped'; tag = 'skipped'; tagText = 'BỎ QUA ( ' + (ch.reason || '') + ' )'; }
+        if (ch.status === 'invalid') { kind = null; }
+        const item = renderSetNotation({
+          state: ch.state,
+          action: ch.action,
+          depth: ch.depth,
+          id: ch.id,
+          parentId: ch.parentId,
+          g: ch.g,
+          h: ch.h,
+          status: ch.status,
+        }, { kind, tag, tagText });
+        list.appendChild(item);
+      });
+    }
     tdFront.appendChild(list);
 
     tr.appendChild(tdFront);

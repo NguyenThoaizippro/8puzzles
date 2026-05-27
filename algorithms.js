@@ -1,16 +1,3 @@
-/* ============================================================
-   ALGORITHMS — Mỗi thuật toán là 1 generator, yield từng vòng while.
-   ------------------------------------------------------------
-   Mỗi node được gán nextId tăng dần ngay khi sinh ra ( cả node đã add
-   lẫn node "goal" trong khi expand ). Skipped/invalid không cấp id.
-   ------------------------------------------------------------
-   Step yield trả về:
-     {
-       iter, popped, children, frontierBefore, frontierAfter,
-       reachedAfter, done, success, goalNode,
-     }
-============================================================ */
-
 function makeNode(state, parent = null, action = null, depth = 0, g = 0, h = 0, id = -1) {
   return {
     state, parent, action, depth, g, h, id,
@@ -364,4 +351,126 @@ function* greedy(start, goal) {
   };
 }
 
-const ALGORITHMS = { bfs, dfs, ucs, greedy };
+/* ---------- IDS HELPERS ---------- */
+function isCycle(node) {
+  let curr = node.parent;
+  while (curr) {
+    if (statesEqual(curr.state, node.state)) return true;
+    curr = curr.parent;
+  }
+  return false;
+}
+
+function getPathKeys(node) {
+  const keys = [];
+  let curr = node;
+  while (curr) {
+    keys.unshift(stateKey(curr.state));
+    curr = curr.parent;
+  }
+  return keys;
+}
+
+/* ---------- IDS ---------- */
+function* ids(start, goal) {
+  let nextId = 0;
+  let iter = 0;
+
+  for (let limit = 0; limit < 100; limit++) {
+    const startNode = makeNode(start, null, null, 0, 0, 0, nextId++);
+    const frontier = [startNode];
+    let anyCutoff = false;
+
+    while (frontier.length > 0) {
+      iter++;
+      const frontierBefore = snapshotFrontier(frontier);
+      const node = frontier.pop();                       // LIFO
+      const poppedIndex = frontier.length;               // top of stack
+      const children = [];
+
+      const reachedAfter = getPathKeys(node);
+
+      if (statesEqual(node.state, goal)) {
+        yield {
+          iter, popped: snapshotPopped(node), poppedIndex,
+          children: [], frontierBefore,
+          frontierAfter: snapshotFrontier(frontier),
+          reachedAfter,
+          done: true, success: true, goalNode: node,
+          limit,
+        };
+        return;
+      }
+
+      if (node.depth >= limit) {
+        anyCutoff = true;
+        yield {
+          iter, popped: snapshotPopped(node), poppedIndex,
+          children: [], frontierBefore,
+          frontierAfter: snapshotFrontier(frontier),
+          reachedAfter,
+          done: false, success: false, goalNode: null,
+          limit,
+          expansionMessage: `Không mở rộng: Đạt giới hạn độ sâu (depth ≥ ${limit})`,
+        };
+      } else if (isCycle(node)) {
+        yield {
+          iter, popped: snapshotPopped(node), poppedIndex,
+          children: [], frontierBefore,
+          frontierAfter: snapshotFrontier(frontier),
+          reachedAfter,
+          done: false, success: false, goalNode: null,
+          limit,
+          expansionMessage: `Không mở rộng: Tạo chu trình (trùng với tổ tiên)`,
+        };
+      } else {
+        // Expand node
+        for (const action of ACTION_ORDER) {
+          const ns = applyAction(node.state, action);
+          if (ns === null) {
+            children.push({ action, state: null, status: 'invalid', reason: 'không thể di chuyển', parentId: node.id });
+            continue;
+          }
+          const childNode = makeNode(ns, node, action, node.depth + 1, 0, 0, nextId++);
+          frontier.push(childNode);
+          children.push({
+            action, state: ns, status: 'added', reason: 'thêm vào frontier',
+            node: childNode, depth: childNode.depth, id: childNode.id, parentId: node.id,
+          });
+        }
+
+        yield {
+          iter, popped: snapshotPopped(node), poppedIndex,
+          children, frontierBefore,
+          frontierAfter: snapshotFrontier(frontier),
+          reachedAfter,
+          done: false, success: false, goalNode: null,
+          limit,
+        };
+      }
+    }
+
+    // If DLS completed and no cutoff occurred, then the goal is not reachable.
+    if (!anyCutoff) {
+      yield {
+        iter: iter + 1, popped: null, poppedIndex: -1,
+        children: [], frontierBefore: [], frontierAfter: [],
+        reachedAfter: [],
+        done: true, success: false, goalNode: null,
+        limit,
+      };
+      return;
+    }
+  }
+
+  // Safety exit
+  yield {
+    iter: iter + 1, popped: null, poppedIndex: -1,
+    children: [], frontierBefore: [], frontierAfter: [],
+    reachedAfter: [],
+    done: true, success: false, goalNode: null,
+    limit: 100,
+  };
+}
+
+const ALGORITHMS = { bfs, dfs, ids, ucs, greedy };
