@@ -431,6 +431,17 @@ function* ids(start, goal) {
             children.push({ action, state: null, status: 'invalid', reason: 'không thể di chuyển', parentId: node.id });
             continue;
           }
+          const k = stateKey(ns);
+          const inPath = reachedAfter.includes(k);
+          const inFrontier = frontier.some(f => stateKey(f.state) === k);
+          if (inPath || inFrontier) {
+            children.push({
+              action, state: ns, status: 'skipped',
+              reason: inPath ? 'đã trong reached' : 'đã trong frontier',
+              depth: node.depth + 1, parentId: node.id,
+            });
+            continue;
+          }
           const childNode = makeNode(ns, node, action, node.depth + 1, 0, 0, nextId++);
           frontier.push(childNode);
           children.push({
