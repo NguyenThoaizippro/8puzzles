@@ -291,8 +291,29 @@ function renderSetNotation(item, opts = {}) {
   const open = document.createElement('span'); open.className = 'brace'; open.textContent = '{';
   node.appendChild(open);
 
-  // grid
-  node.appendChild(miniBoard(item.state));
+  // grid with cost
+  const gridContainer = document.createElement('div');
+  gridContainer.className = 'grid-container-with-cost';
+  gridContainer.appendChild(miniBoard(item.state));
+
+  if (state.algo === 'ucs' && item.g !== undefined) {
+    const costDiv = document.createElement('div');
+    costDiv.className = 'node-cost-sub';
+    costDiv.textContent = `g = ${item.g}`;
+    gridContainer.appendChild(costDiv);
+  } else if (state.algo === 'greedy' && item.h !== undefined) {
+    const costDiv = document.createElement('div');
+    costDiv.className = 'node-cost-sub';
+    costDiv.textContent = `h = ${item.h}`;
+    gridContainer.appendChild(costDiv);
+  } else if ((state.algo === 'astar' || state.algo === 'idastar') && item.g !== undefined && item.h !== undefined) {
+    const costDiv = document.createElement('div');
+    costDiv.className = 'node-cost-sub';
+    costDiv.textContent = `g = ${item.g}, h = ${item.h} (f = ${item.g + item.h})`;
+    gridContainer.appendChild(costDiv);
+  }
+
+  node.appendChild(gridContainer);
 
   // , parent_label
   const sep1 = document.createElement('span'); sep1.className = 'sep'; sep1.textContent = ',';
@@ -328,21 +349,6 @@ function renderSetNotation(item, opts = {}) {
     const lab = document.createElement('span'); lab.className = 'child-label';
     lab.textContent = toLabel(item.id);
     node.appendChild(lab);
-  }
-
-  // Cost meta ( g / h ) — nhỏ phía cuối
-  if (state.algo === 'ucs' && item.g !== undefined) {
-    const eq = document.createElement('span'); eq.className = 'sep';
-    eq.textContent = `   g = ${item.g}`;
-    node.appendChild(eq);
-  } else if (state.algo === 'greedy' && item.h !== undefined) {
-    const eq = document.createElement('span'); eq.className = 'sep';
-    eq.textContent = `   h = ${item.h}`;
-    node.appendChild(eq);
-  } else if ((state.algo === 'astar' || state.algo === 'idastar') && item.g !== undefined && item.h !== undefined) {
-    const eq = document.createElement('span'); eq.className = 'sep';
-    eq.textContent = `   g = ${item.g}, h = ${item.h} (f = ${item.g + item.h})`;
-    node.appendChild(eq);
   }
 
   // tag trạng thái ( cho expansion list )

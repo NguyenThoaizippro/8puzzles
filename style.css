@@ -647,6 +647,22 @@ html, body {
   transition: background 0.25s, border-color 0.25s, opacity 0.25s;
 }
 
+.grid-container-with-cost {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  vertical-align: middle;
+}
+
+.node-cost-sub {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: bold;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
 .set-notation .brace {
   font-size: 24px;
   color: var(--text-dim);
