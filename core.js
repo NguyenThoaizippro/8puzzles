@@ -101,6 +101,7 @@ const PRESETS = {
   ids: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
   ucs: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
   greedy: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
+  astar: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
 };
 
 const ALGO_META = {
@@ -109,4 +110,5 @@ const ALGO_META = {
   ids: { name: 'IDS', formula: 'Duyệt sâu dần ( DLS với limit = 0, 1, 2... )' },
   ucs: { name: 'UCS', formula: 'g( child ) = g( parent ) + số ô sai của child' },
   greedy: { name: 'Greedy', formula: 'h( n ) = Σ Manhattan |Δrow| + |Δcol|  ( trừ blank )' },
+  astar: { name: 'A*', formula: 'f( n ) = g( n ) + h( n )  ( g = số ô sai cả blank, h = Manhattan )' },
 };

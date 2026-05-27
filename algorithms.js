@@ -484,4 +484,132 @@ function* ids(start, goal) {
   };
 }
 
-const ALGORITHMS = { bfs, dfs, ids, ucs, greedy };
+/* ---------- A* ---------- */
+function misplacedCountWithBlank(state, goal) {
+  let c = 0;
+  for (let i = 0; i < 9; i++) {
+    if (state[i] !== goal[i]) c++;
+  }
+  return c;
+}
+
+function* astar(start, goal) {
+  let nextId = 0;
+  const startH = manhattanDistance(start, goal);
+  const startNode = makeNode(start, null, null, 0, 0, startH, nextId++);
+  const frontier = [startNode];
+  const reached = new Map();
+  let iter = 0;
+
+  while (frontier.length) {
+    iter++;
+    const frontierBefore = snapshotFrontier(frontier);
+    const popped = popMinFIFO(frontier, n => n.g + n.h);
+    const node = popped.node;
+    const poppedIndex = popped.index;
+    const children = [];
+
+    // Goal test khi POP
+    if (statesEqual(node.state, goal)) {
+      reached.set(stateKey(node.state), node);
+      yield {
+        iter, popped: snapshotPopped(node), poppedIndex,
+        children: [], frontierBefore,
+        frontierAfter: snapshotFrontier(frontier),
+        reachedAfter: Array.from(reached.keys()),
+        done: true, success: true, goalNode: node,
+      };
+      return;
+    }
+
+    reached.set(stateKey(node.state), node);
+
+    for (const action of ACTION_ORDER) {
+      const ns = applyAction(node.state, action);
+      if (ns === null) {
+        children.push({ action, state: null, status: 'invalid', reason: 'không thể di chuyển', parentId: node.id });
+        continue;
+      }
+      const k = stateKey(ns);
+      const childH = manhattanDistance(ns, goal);
+      const moveCost = misplacedCountWithBlank(ns, goal);
+      const childG = node.g + moveCost;
+
+      // ii. NẾU m đã nằm trong REACHED
+      if (reached.has(k)) {
+        const existingNode = reached.get(k);
+        if (childG >= existingNode.g) {
+          children.push({
+            action, state: ns, status: 'skipped',
+            reason: `đã trong reached (g_new = ${childG} ≥ g_old = ${existingNode.g})`,
+            g: childG, h: childH, depth: node.depth + 1, parentId: node.id,
+          });
+          continue;
+        } else {
+          // Xóa khỏi reached và thêm lại vào frontier
+          reached.delete(k);
+          const childNode = makeNode(ns, node, action, node.depth + 1, childG, childH, nextId++);
+          frontier.push(childNode);
+          children.push({
+            action, state: ns, status: 'added',
+            reason: `cập nhật từ reached (g_new = ${childG} < g_old = ${existingNode.g})`,
+            g: childG, h: childH, depth: childNode.depth, id: childNode.id, parentId: node.id, node: childNode,
+          });
+          continue;
+        }
+      }
+
+      // iii. NẾU m đã nằm trong FRONTIER
+      const frontierIndex = frontier.findIndex(f => stateKey(f.state) === k);
+      if (frontierIndex !== -1) {
+        const existingNode = frontier[frontierIndex];
+        if (childG < existingNode.g) {
+          // Cập nhật lại g, f, parent
+          existingNode.g = childG;
+          existingNode.h = childH;
+          existingNode.parent = node;
+          existingNode.parentId = node.id;
+          existingNode.depth = node.depth + 1;
+          children.push({
+            action, state: ns, status: 'added',
+            reason: `cập nhật trong frontier (g_new = ${childG} < g_old = ${existingNode.g})`,
+            g: childG, h: childH, depth: existingNode.depth, id: existingNode.id, parentId: node.id, node: existingNode,
+          });
+        } else {
+          children.push({
+            action, state: ns, status: 'skipped',
+            reason: `đã trong frontier (g_new = ${childG} ≥ g_old = ${existingNode.g})`,
+            g: childG, h: childH, depth: node.depth + 1, parentId: node.id,
+          });
+        }
+        continue;
+      }
+
+      // iv. NẾU m chưa có mặt trong FRONTIER và REACHED
+      const childNode = makeNode(ns, node, action, node.depth + 1, childG, childH, nextId++);
+      frontier.push(childNode);
+      children.push({
+        action, state: ns, status: 'added',
+        reason: `thêm vào frontier (g = ${node.g} + ${moveCost} = ${childG}, h = ${childH})`,
+        g: childG, h: childH, depth: childNode.depth, id: childNode.id, parentId: node.id, node: childNode,
+      });
+    }
+
+    yield {
+      iter, popped: snapshotPopped(node), poppedIndex,
+      children, frontierBefore,
+      frontierAfter: snapshotFrontier(frontier),
+      reachedAfter: Array.from(reached.keys()),
+      done: false, success: false, goalNode: null,
+    };
+  }
+
+  yield {
+    iter: iter + 1, popped: null, poppedIndex: -1,
+    children: [], frontierBefore: [], frontierAfter: [],
+    reachedAfter: Array.from(reached.keys()),
+    done: true, success: false, goalNode: null,
+  };
+}
+
+const ALGORITHMS = { bfs, dfs, ids, ucs, greedy, astar };

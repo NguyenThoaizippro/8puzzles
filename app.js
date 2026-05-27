@@ -339,6 +339,10 @@ function renderSetNotation(item, opts = {}) {
     const eq = document.createElement('span'); eq.className = 'sep';
     eq.textContent = `   h = ${item.h}`;
     node.appendChild(eq);
+  } else if (state.algo === 'astar' && item.g !== undefined && item.h !== undefined) {
+    const eq = document.createElement('span'); eq.className = 'sep';
+    eq.textContent = `   g = ${item.g}, h = ${item.h} (f = ${item.g + item.h})`;
+    node.appendChild(eq);
   }
 
   // tag trạng thái ( cho expansion list )
