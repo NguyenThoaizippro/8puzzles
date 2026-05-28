@@ -633,8 +633,8 @@ function* idastar(start, goal) {
       const children = [];
 
       const reachedAfter = getPathKeys(node);
-      const nodeF = node.depth + node.h; // f(n) = g(n) + h(n)
 
+      // Goal test khi POP
       if (statesEqual(node.state, goal)) {
         yield {
           iter, popped: snapshotPopped(node), poppedIndex,
@@ -647,18 +647,7 @@ function* idastar(start, goal) {
         return;
       }
 
-      if (nodeF > limit) {
-        if (nodeF < nextLimit) nextLimit = nodeF;
-        yield {
-          iter, popped: snapshotPopped(node), poppedIndex,
-          children: [], frontierBefore,
-          frontierAfter: snapshotFrontier(frontier),
-          reachedAfter,
-          done: false, success: false, goalNode: null,
-          limit,
-          expansionMessage: `Không mở rộng: f(n) = ${nodeF} > limit = ${limit}`,
-        };
-      } else if (isCycle(node)) {
+      if (isCycle(node)) {
         yield {
           iter, popped: snapshotPopped(node), poppedIndex,
           children: [], frontierBefore,
@@ -677,23 +666,40 @@ function* idastar(start, goal) {
             continue;
           }
           const k = stateKey(ns);
+          const childH = manhattanDistance(ns, goal);
+          const childG = node.depth + 1;
+          const childF = childG + childH;
+
+          // i. Kiểm tra vượt ngưỡng (f > limit)
+          if (childF > limit) {
+            if (childF < nextLimit) nextLimit = childF;
+            children.push({
+              action, state: ns, status: 'cutoff',
+              reason: `f = ${childF} > limit = ${limit}`,
+              g: childG, h: childH, depth: childG, parentId: node.id,
+            });
+            continue;
+          }
+
+          // ii. Kiểm tra tạo chu trình
           const inPath = reachedAfter.includes(k);
           const inFrontier = frontier.some(f => stateKey(f.state) === k);
           if (inPath || inFrontier) {
             children.push({
               action, state: ns, status: 'skipped',
-              reason: inPath ? 'đã trong reached' : 'đã trong frontier',
-              depth: node.depth + 1, parentId: node.id,
+              reason: inPath ? 'trùng với tổ tiên' : 'đã trong frontier',
+              g: childG, h: childH, depth: childG, parentId: node.id,
             });
             continue;
           }
-          const childH = manhattanDistance(ns, goal);
-          const childNode = makeNode(ns, node, action, node.depth + 1, node.depth + 1, childH, nextId++);
+
+          // iii. Thêm vào frontier (thỏa mãn f <= limit)
+          const childNode = makeNode(ns, node, action, childG, childG, childH, nextId++);
           frontier.push(childNode);
           children.push({
             action, state: ns, status: 'added', reason: 'thêm vào frontier',
             node: childNode, depth: childNode.depth, id: childNode.id, parentId: node.id,
-            g: childNode.depth, h: childNode.h,
+            g: childNode.g, h: childNode.h,
           });
         }
 

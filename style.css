@@ -762,6 +762,25 @@ html, body {
 .set-notation .tag.tag-goal    { background: var(--good); color: #ffffff; }
 .set-notation .tag.tag-invalid { background: #f5e7e7; color: var(--bad); }
 .set-notation .tag.tag-popped  { background: #ffd6d6; color: var(--bad); }
+.set-notation .tag.tag-cutoff  { background: #ffe066; color: #d9480f; }
+
+.set-notation.is-cutoff {
+  background: #fff9db;
+  border-color: #fcc419;
+}
+
+.limit-header {
+  font-size: 13px;
+  font-weight: 700;
+  color: #c97d02;
+  background: #fff3bf;
+  border: 1px solid #ffe066;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-bottom: 8px;
+  display: inline-block;
+  letter-spacing: 0.5px;
+}
 
 .set-notation.invalid-row {
   background: #fff5f5;

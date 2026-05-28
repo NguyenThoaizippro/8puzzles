@@ -270,6 +270,7 @@ function renderSetNotation(item, opts = {}) {
   if (kind === 'added') node.classList.add('is-added');
   if (kind === 'goal') node.classList.add('is-goal');
   if (kind === 'skipped') node.classList.add('is-skipped');
+  if (kind === 'cutoff') node.classList.add('is-cutoff');
   if (kind === 'just-added') { node.classList.add('is-added', 'is-just-added'); }
 
   // Trường hợp invalid : không có grid, chỉ in dòng "action: invalid"
@@ -434,6 +435,13 @@ function renderTrace() {
     const tdFront = document.createElement('td');
     tdFront.className = 'col-frontier';
 
+    if (step.limit !== undefined && (state.algo === 'ids' || state.algo === 'idastar')) {
+      const limitTitle = document.createElement('div');
+      limitTitle.className = 'limit-header';
+      limitTitle.textContent = `${state.algo === 'ids' ? 'ĐỘ SÂU GIỚI HẠN (LIMIT)' : 'NGƯỠNG GIỚI HẠN (LIMIT)'} = ${step.limit}`;
+      tdFront.appendChild(limitTitle);
+    }
+
     // 1)  Popped node ( tô đỏ , nằm trong frontier column )
     if (step.popped) {
       const poppedTitle = document.createElement('div');
@@ -475,6 +483,7 @@ function renderTrace() {
         if (ch.status === 'added') { kind = 'added'; tag = 'added'; tagText = 'THÊM'; }
         if (ch.status === 'goal') { kind = 'goal'; tag = 'goal'; tagText = 'GOAL'; }
         if (ch.status === 'skipped') { kind = 'skipped'; tag = 'skipped'; tagText = 'BỎ QUA ( ' + (ch.reason || '') + ' )'; }
+        if (ch.status === 'cutoff') { kind = 'cutoff'; tag = 'cutoff'; tagText = 'VƯỢT NGƯỠNG ( ' + (ch.reason || '') + ' )'; }
         if (ch.status === 'invalid') { kind = null; }
         const item = renderSetNotation({
           state: ch.state,
