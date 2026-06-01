@@ -26,7 +26,7 @@ html, body {
   background: var(--bg);
   color: var(--text);
   font-family: "Times New Roman", "Liberation Serif", "DejaVu Serif", Times, serif;
-  font-size: 15px;
+  font-size: 17px;
   line-height: 1.5;
 }
 
@@ -44,7 +44,7 @@ html, body {
 
 .topbar h1 {
   margin: 0;
-  font-size: 26px;
+  font-size: 32px;
   letter-spacing: 8px;
   font-weight: 600;
 }
@@ -52,7 +52,7 @@ html, body {
 .topbar .subtitle {
   margin: 4px 0 0;
   color: var(--text-dim);
-  font-size: 13px;
+  font-size: 17px;
   letter-spacing: 2px;
 }
 
@@ -118,7 +118,7 @@ html, body {
 .board-title {
   letter-spacing: 4px;
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .board-actions {
@@ -134,6 +134,7 @@ html, body {
   background: var(--line);
   padding: 4px;
   border-radius: 4px;
+  width: 184px;
 }
 
 .cell {
@@ -200,7 +201,7 @@ html, body {
   gap: 12px;
   padding: 6px 0;
   border-bottom: 1px dashed var(--line);
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .info-row:last-child {
@@ -271,7 +272,7 @@ html, body {
   align-items: center;
   gap: 8px;
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: 2px;
   margin-left: auto;
 }
@@ -300,12 +301,12 @@ html, body {
 
 .status-cell span {
   color: var(--text-faint);
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: 3px;
 }
 
 .status-cell b {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 600;
 }
 
@@ -330,13 +331,13 @@ html, body {
 
 .trace-head h2 {
   margin: 0;
-  font-size: 15px;
+  font-size: 18px;
   letter-spacing: 4px;
 }
 
 .trace-head .hint {
   color: var(--text-faint);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .table-wrap {
@@ -365,7 +366,7 @@ html, body {
   color: var(--text-dim);
   font-weight: 500;
   letter-spacing: 3px;
-  font-size: 12px;
+  font-size: 14px;
   z-index: 1;
 }
 
@@ -436,7 +437,7 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .node-cell .node-label {
@@ -446,7 +447,7 @@ html, body {
 
 .node-cell .node-cost {
   color: var(--warn);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .children-list {
@@ -478,17 +479,17 @@ html, body {
 .child-item .child-meta {
   display: flex;
   flex-direction: column;
-  font-size: 12px;
+  font-size: 14px;
   gap: 1px;
 }
 
 .child-item .child-cost {
   color: var(--text-dim);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .child-item .child-status {
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: 1px;
 }
 
@@ -516,13 +517,13 @@ html, body {
 
 .solution-section h2 {
   margin: 0 0 8px;
-  font-size: 15px;
+  font-size: 18px;
   letter-spacing: 4px;
 }
 
 .solution-meta {
   color: var(--text-dim);
-  font-size: 13px;
+  font-size: 15px;
   margin-bottom: 16px;
   display: flex;
   gap: 24px;
@@ -579,7 +580,7 @@ html, body {
 }
 
 .solution-step .step-action {
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: 3px;
   color: var(--text-dim);
 }
@@ -590,7 +591,7 @@ html, body {
 
 .solution-arrow {
   color: var(--text-faint);
-  font-size: 18px;
+  font-size: 22px;
 }
 
 .playback {
@@ -601,7 +602,7 @@ html, body {
 
 .playback-info {
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 ::-webkit-scrollbar {
@@ -642,7 +643,7 @@ html, body {
   border: 1px solid var(--line);
   border-radius: 6px;
   background: #ffffff;
-  font-size: 14.5px;
+  font-size: 16.5px;
   line-height: 1.2;
   transition: background 0.25s, border-color 0.25s, opacity 0.25s;
 }
@@ -656,7 +657,7 @@ html, body {
 }
 
 .node-cost-sub {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-dim);
   font-weight: bold;
   margin-top: 2px;
@@ -664,7 +665,7 @@ html, body {
 }
 
 .set-notation .brace {
-  font-size: 24px;
+  font-size: 28px;
   color: var(--text-dim);
   font-weight: 400;
 }
@@ -678,7 +679,7 @@ html, body {
 .set-notation .action-letter {
   font-weight: 700;
   color: var(--text);
-  font-size: 15px;
+  font-size: 17px;
 }
 
 .set-notation .depth-num {
@@ -689,7 +690,7 @@ html, body {
 .set-notation .eq {
   color: var(--text-dim);
   margin: 0 4px;
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .set-notation .child-label {
@@ -699,7 +700,7 @@ html, body {
   border-radius: 3px;
   color: #1f3fa0;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 17px;
 }
 
 .set-notation.is-added {
@@ -750,7 +751,7 @@ html, body {
   display: inline-block;
   margin-left: 6px;
   padding: 1px 8px;
-  font-size: 12px;
+  font-size: 14px;
   border-radius: 10px;
   letter-spacing: 0.5px;
   text-decoration: none !important;
@@ -770,7 +771,7 @@ html, body {
 }
 
 .limit-header {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   color: #c97d02;
   background: #fff3bf;
@@ -788,6 +789,29 @@ html, body {
   border-color: #e0bcbc;
   opacity: 0.85;
   font-style: italic;
+}
+
+.formula-select {
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--bg-1);
+  border: 1px solid var(--line-2);
+  border-radius: 4px;
+  padding: 4px 10px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.formula-select:hover {
+  background: var(--bg-2);
+  border-color: var(--accent);
+}
+.formula-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.08);
 }
 
 /* ============================================================

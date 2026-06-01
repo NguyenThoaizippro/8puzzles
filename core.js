@@ -103,6 +103,8 @@ const PRESETS = {
   greedy: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
   astar: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
   idastar: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
+  simpleHillClimbing: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
+  steepestAscentHillClimbing: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
 };
 
 const ALGO_META = {
@@ -113,4 +115,39 @@ const ALGO_META = {
   greedy: { name: 'Greedy', formula: 'h( n ) = Σ Manhattan |Δrow| + |Δcol|  ( trừ blank )' },
   astar: { name: 'A*', formula: 'f( n ) = g( n ) + h( n )  ( g = số ô sai cả blank, h = Manhattan )' },
   idastar: { name: 'IDA*', formula: 'f( n ) = g( n ) + h( n )  ( g = depth, h = Manhattan, giới hạn theo f )' },
+  simpleHillClimbing: { name: 'Leo núi đơn giản', formula: 'h( n ) = Σ Manhattan |Δrow| + |Δcol| (chọn lân cận đầu tiên tốt hơn)' },
+  steepestAscentHillClimbing: { name: 'Leo dốc nhất', formula: 'h( n ) = Σ Manhattan |Δrow| + |Δcol| (chọn lân cận tốt nhất trong tất cả)' },
 };
+
+function getStepCost(stateArr, goalArr, parentStateArr, gType) {
+  if (gType === 'steps') {
+    return 1;
+  }
+  if (gType === 'manhattan') {
+    return manhattanDistance(stateArr, goalArr);
+  }
+  if (gType === 'misplaced') {
+    return misplacedCount(stateArr, goalArr);
+  }
+  if (gType === 'swap') {
+    if (!parentStateArr) return 0;
+    const parentBi = parentStateArr.indexOf(0);
+    return stateArr[parentBi];
+  }
+  return 1;
+}
+
+function getHValue(stateArr, goalArr, parentStateArr, hType) {
+  if (hType === 'manhattan') {
+    return manhattanDistance(stateArr, goalArr);
+  }
+  if (hType === 'misplaced') {
+    return misplacedCount(stateArr, goalArr);
+  }
+  if (hType === 'swap') {
+    if (!parentStateArr) return 0;
+    const parentBi = parentStateArr.indexOf(0);
+    return stateArr[parentBi];
+  }
+  return manhattanDistance(stateArr, goalArr);
+}

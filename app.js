@@ -10,6 +10,8 @@ const state = {
   editMode: { start: false, goal: false },
   playback: { timer: null, idx: 0, path: null },
   labels: new Map(),   // stateKey → letter label
+  gType: 'steps',
+  hType: 'manhattan',
 };
 
 /* ---------- TABS ---------- */
@@ -113,7 +115,92 @@ function toggleEdit(which) {
 function renderInfo() {
   const meta = ALGO_META[state.algo];
   $('#info-algo').textContent = meta.name;
-  $('#info-formula').textContent = meta.formula;
+
+  const formulaEl = $('#info-formula');
+  formulaEl.innerHTML = '';
+
+  const hasG = ['ucs', 'astar', 'idastar'].includes(state.algo);
+  const hasH = ['greedy', 'astar', 'idastar', 'simpleHillClimbing', 'steepestAscentHillClimbing'].includes(state.algo);
+
+  if (!hasG && !hasH) {
+    formulaEl.textContent = 'Không có';
+    return;
+  }
+
+  const container = document.createElement('div');
+  container.style.display = 'inline-flex';
+  container.style.alignItems = 'center';
+  container.style.gap = '6px';
+  container.style.flexWrap = 'wrap';
+
+  const labelF = document.createElement('span');
+  labelF.textContent = 'f(n) = ';
+  container.appendChild(labelF);
+
+  if (hasG) {
+    const selectG = document.createElement('select');
+    selectG.id = 'select-g';
+    selectG.className = 'formula-select';
+
+    const optionsG = [
+      { value: 'steps', text: 'g(n): Số bước (mặc định)' },
+      { value: 'manhattan', text: 'g(n): Manhattan' },
+      { value: 'misplaced', text: 'g(n): Số ô sai' },
+      { value: 'swap', text: 'g(n): Giá trị swap' }
+    ];
+
+    optionsG.forEach(opt => {
+      const elOpt = document.createElement('option');
+      elOpt.value = opt.value;
+      elOpt.textContent = opt.text;
+      elOpt.selected = (state.gType === opt.value);
+      selectG.appendChild(elOpt);
+    });
+
+    selectG.addEventListener('change', (e) => {
+      state.gType = e.target.value;
+      resetRun();
+      renderAll();
+    });
+
+    container.appendChild(selectG);
+  }
+
+  if (hasG && hasH) {
+    const plus = document.createElement('span');
+    plus.textContent = ' + ';
+    container.appendChild(plus);
+  }
+
+  if (hasH) {
+    const selectH = document.createElement('select');
+    selectH.id = 'select-h';
+    selectH.className = 'formula-select';
+
+    const optionsH = [
+      { value: 'manhattan', text: 'h(n): Manhattan (mặc định)' },
+      { value: 'misplaced', text: 'h(n): Số ô sai' },
+      { value: 'swap', text: 'h(n): Giá trị swap' }
+    ];
+
+    optionsH.forEach(opt => {
+      const elOpt = document.createElement('option');
+      elOpt.value = opt.value;
+      elOpt.textContent = opt.text;
+      elOpt.selected = (state.hType === opt.value);
+      selectH.appendChild(elOpt);
+    });
+
+    selectH.addEventListener('change', (e) => {
+      state.hType = e.target.value;
+      resetRun();
+      renderAll();
+    });
+
+    container.appendChild(selectH);
+  }
+
+  formulaEl.appendChild(container);
 }
 
 /* ---------- CONTROLS ---------- */
@@ -141,7 +228,7 @@ function ensureGenerator() {
   if (!isSolvable(state.start, state.goal)) {
     if (!confirm('Cảnh báo: cấu hình Start → Goal có thể KHÔNG giải được. Vẫn chạy?')) return false;
   }
-  const gen = ALGORITHMS[state.algo](state.start.slice(), state.goal.slice());
+  const gen = ALGORITHMS[state.algo](state.start.slice(), state.goal.slice(), state.gType, state.hType);
   state.run = {
     gen, steps: [], finished: false, success: false, goalNode: null,
     finalReached: [],
@@ -302,7 +389,7 @@ function renderSetNotation(item, opts = {}) {
     costDiv.className = 'node-cost-sub';
     costDiv.textContent = `g = ${item.g}`;
     gridContainer.appendChild(costDiv);
-  } else if (state.algo === 'greedy' && item.h !== undefined) {
+  } else if ((state.algo === 'greedy' || state.algo === 'simpleHillClimbing' || state.algo === 'steepestAscentHillClimbing') && item.h !== undefined) {
     const costDiv = document.createElement('div');
     costDiv.className = 'node-cost-sub';
     costDiv.textContent = `h = ${item.h}`;

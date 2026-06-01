@@ -204,7 +204,7 @@ function* dfs(start, goal) {
 }
 
 /* ---------- UCS ---------- */
-function* ucs(start, goal) {
+function* ucs(start, goal, gType = 'steps', hType = 'manhattan') {
   let nextId = 0;
   const startNode = makeNode(start, null, null, 0, 0, 0, nextId++);
   const frontier = [startNode];
@@ -241,7 +241,7 @@ function* ucs(start, goal) {
         continue;
       }
       const k = stateKey(ns);
-      const childG = node.g + misplacedCount(ns, goal);
+      const childG = node.g + getStepCost(ns, goal, node.state, gType);
       const inFrontier = frontier.some(f => stateKey(f.state) === k);
       if (reached.has(k) || inFrontier) {
         children.push({
@@ -278,9 +278,9 @@ function* ucs(start, goal) {
 }
 
 /* ---------- GREEDY ---------- */
-function* greedy(start, goal) {
+function* greedy(start, goal, gType = 'steps', hType = 'manhattan') {
   let nextId = 0;
-  const startH = manhattanDistance(start, goal);
+  const startH = getHValue(start, goal, null, hType);
   const startNode = makeNode(start, null, null, 0, 0, startH, nextId++);
   const frontier = [startNode];
   const reached = new Set();
@@ -315,7 +315,7 @@ function* greedy(start, goal) {
         continue;
       }
       const k = stateKey(ns);
-      const childH = manhattanDistance(ns, goal);
+      const childH = getHValue(ns, goal, node.state, hType);
       const inFrontier = frontier.some(f => stateKey(f.state) === k);
       if (reached.has(k) || inFrontier) {
         children.push({
@@ -493,9 +493,9 @@ function misplacedCountWithBlank(state, goal) {
   return c;
 }
 
-function* astar(start, goal) {
+function* astar(start, goal, gType = 'steps', hType = 'manhattan') {
   let nextId = 0;
-  const startH = manhattanDistance(start, goal);
+  const startH = getHValue(start, goal, null, hType);
   const startNode = makeNode(start, null, null, 0, 0, startH, nextId++);
   const frontier = [startNode];
   const reached = new Map();
@@ -531,8 +531,8 @@ function* astar(start, goal) {
         continue;
       }
       const k = stateKey(ns);
-      const childH = manhattanDistance(ns, goal);
-      const moveCost = misplacedCountWithBlank(ns, goal);
+      const childH = getHValue(ns, goal, node.state, hType);
+      const moveCost = getStepCost(ns, goal, node.state, gType);
       const childG = node.g + moveCost;
 
       // ii. NẾU m đã nằm trong REACHED
@@ -613,11 +613,11 @@ function* astar(start, goal) {
 }
 
 /* ---------- IDA* ---------- */
-function* idastar(start, goal) {
+function* idastar(start, goal, gType = 'steps', hType = 'manhattan') {
   let nextId = 0;
   let iter = 0;
 
-  const startH = manhattanDistance(start, goal);
+  const startH = getHValue(start, goal, null, hType);
   let limit = startH; // Initial limit is f(start) = 0 + h(start)
 
   for (let cycle = 0; cycle < 100; cycle++) {
@@ -666,8 +666,8 @@ function* idastar(start, goal) {
             continue;
           }
           const k = stateKey(ns);
-          const childH = manhattanDistance(ns, goal);
-          const childG = node.depth + 1;
+          const childH = getHValue(ns, goal, node.state, hType);
+          const childG = node.g + getStepCost(ns, goal, node.state, gType);
           const childF = childG + childH;
 
           // i. Kiểm tra vượt ngưỡng (f > limit)
@@ -694,7 +694,7 @@ function* idastar(start, goal) {
           }
 
           // iii. Thêm vào frontier (thỏa mãn f <= limit)
-          const childNode = makeNode(ns, node, action, childG, childG, childH, nextId++);
+          const childNode = makeNode(ns, node, action, node.depth + 1, childG, childH, nextId++);
           frontier.push(childNode);
           children.push({
             action, state: ns, status: 'added', reason: 'thêm vào frontier',
@@ -739,4 +739,230 @@ function* idastar(start, goal) {
   };
 }
 
-const ALGORITHMS = { bfs, dfs, ids, ucs, greedy, astar, idastar };
+/* ---------- SIMPLE HILL CLIMBING ---------- */
+function* simpleHillClimbing(start, goal, gType = 'steps', hType = 'manhattan') {
+  let nextId = 0;
+  const startH = getHValue(start, goal, null, hType);
+  const startNode = makeNode(start, null, null, 0, 0, startH, nextId++);
+  
+  if (statesEqual(start, goal)) {
+    yield {
+      iter: 0, popped: snapshotPopped(startNode), poppedIndex: 0,
+      children: [], frontierBefore: [snapshotPopped(startNode)],
+      frontierAfter: [], reachedAfter: [stateKey(start)],
+      done: true, success: true, goalNode: startNode,
+    };
+    return;
+  }
+
+  let currentNode = startNode;
+  const reached = new Set([stateKey(start)]);
+  let iter = 0;
+
+  while (true) {
+    iter++;
+    const frontierBefore = [snapshotPopped(currentNode)];
+    const children = [];
+    let nextNode = null;
+    let foundBetter = false;
+
+    for (const action of ACTION_ORDER) {
+      if (foundBetter) break;
+
+      const ns = applyAction(currentNode.state, action);
+      if (ns === null) {
+        children.push({ action, state: null, status: 'invalid', reason: 'không thể di chuyển', parentId: currentNode.id });
+        continue;
+      }
+
+      const k = stateKey(ns);
+      const childH = getHValue(ns, goal, currentNode.state, hType);
+
+      if (statesEqual(ns, goal)) {
+        const childNode = makeNode(ns, currentNode, action, currentNode.depth + 1, 0, childH, nextId++);
+        children.push({
+          action, state: ns, status: 'goal', reason: 'TRÙNG GOAL',
+          node: childNode, depth: childNode.depth, id: childNode.id, parentId: currentNode.id, h: childH
+        });
+        nextNode = childNode;
+        foundBetter = true;
+        break;
+      }
+
+      if (childH < currentNode.h) {
+        const childNode = makeNode(ns, currentNode, action, currentNode.depth + 1, 0, childH, nextId++);
+        children.push({
+          action, state: ns, status: 'added', reason: `tốt hơn (h_new = ${childH} < h_curr = ${currentNode.h})`,
+          node: childNode, depth: childNode.depth, id: childNode.id, parentId: currentNode.id, h: childH
+        });
+        nextNode = childNode;
+        foundBetter = true;
+      } else {
+        children.push({
+          action, state: ns, status: 'skipped',
+          reason: `không tốt hơn (h = ${childH} ≥ ${currentNode.h})`,
+          depth: currentNode.depth + 1, parentId: currentNode.id, h: childH
+        });
+      }
+    }
+
+    if (foundBetter && nextNode) {
+      reached.add(stateKey(nextNode.state));
+      yield {
+        iter, popped: snapshotPopped(currentNode), poppedIndex: 0,
+        children, frontierBefore,
+        frontierAfter: [snapshotPopped(nextNode)],
+        reachedAfter: snapshotReached(reached),
+        done: statesEqual(nextNode.state, goal),
+        success: statesEqual(nextNode.state, goal),
+        goalNode: statesEqual(nextNode.state, goal) ? nextNode : null,
+      };
+
+      currentNode = nextNode;
+      if (statesEqual(currentNode.state, goal)) {
+        return;
+      }
+    } else {
+      yield {
+        iter, popped: snapshotPopped(currentNode), poppedIndex: 0,
+        children, frontierBefore,
+        frontierAfter: [],
+        reachedAfter: snapshotReached(reached),
+        done: true,
+        success: false,
+        goalNode: null,
+        expansionMessage: `Dừng: Đạt cực đại cục bộ (không có trạng thái lân cận nào tốt hơn)`,
+      };
+      return;
+    }
+  }
+}
+
+/* ---------- STEEPEST-ASCENT HILL CLIMBING ---------- */
+function* steepestAscentHillClimbing(start, goal, gType = 'steps', hType = 'manhattan') {
+  let nextId = 0;
+  const startH = getHValue(start, goal, null, hType);
+  const startNode = makeNode(start, null, null, 0, 0, startH, nextId++);
+
+  if (statesEqual(start, goal)) {
+    yield {
+      iter: 0, popped: snapshotPopped(startNode), poppedIndex: 0,
+      children: [], frontierBefore: [snapshotPopped(startNode)],
+      frontierAfter: [], reachedAfter: [stateKey(start)],
+      done: true, success: true, goalNode: startNode,
+    };
+    return;
+  }
+
+  let currentNode = startNode;
+  const reached = new Set([stateKey(start)]);
+  let iter = 0;
+
+  while (true) {
+    iter++;
+    const frontierBefore = [snapshotPopped(currentNode)];
+    const children = [];
+    
+    let bestChildNode = null;
+    let bestH = Infinity;
+    let bestAction = null;
+    let bestState = null;
+
+    const evaluatedNeighbors = [];
+
+    for (const action of ACTION_ORDER) {
+      const ns = applyAction(currentNode.state, action);
+      if (ns === null) {
+        evaluatedNeighbors.push({ action, state: null, status: 'invalid', reason: 'không thể di chuyển' });
+        continue;
+      }
+
+      const childH = getHValue(ns, goal, currentNode.state, hType);
+      evaluatedNeighbors.push({ action, state: ns, h: childH });
+
+      if (childH < bestH) {
+        bestH = childH;
+        bestAction = action;
+        bestState = ns;
+      }
+    }
+
+    const isBetter = bestH < currentNode.h;
+
+    for (const neighbor of evaluatedNeighbors) {
+      if (neighbor.status === 'invalid') {
+        children.push({
+          action: neighbor.action, state: null, status: 'invalid',
+          reason: neighbor.reason, parentId: currentNode.id
+        });
+        continue;
+      }
+
+      const isBest = (neighbor.action === bestAction);
+
+      if (isBest && isBetter) {
+        const childId = nextId++;
+        const childNode = makeNode(neighbor.state, currentNode, neighbor.action, currentNode.depth + 1, 0, neighbor.h, childId);
+        bestChildNode = childNode;
+
+        if (statesEqual(neighbor.state, goal)) {
+          children.push({
+            action: neighbor.action, state: neighbor.state, status: 'goal',
+            reason: `tốt nhất & TRÙNG GOAL (h = ${neighbor.h})`,
+            node: childNode, depth: childNode.depth, id: childId, parentId: currentNode.id, h: neighbor.h
+          });
+        } else {
+          children.push({
+            action: neighbor.action, state: neighbor.state, status: 'added',
+            reason: `tốt nhất và tốt hơn (h_new = ${neighbor.h} < h_curr = ${currentNode.h})`,
+            node: childNode, depth: childNode.depth, id: childId, parentId: currentNode.id, h: neighbor.h
+          });
+        }
+      } else {
+        let reason = '';
+        if (neighbor.h >= currentNode.h) {
+          reason = `không tốt hơn current (h = ${neighbor.h} ≥ ${currentNode.h})`;
+        } else {
+          reason = `tốt hơn current nhưng không phải tốt nhất (h = ${neighbor.h} > h_best = ${bestH})`;
+        }
+
+        children.push({
+          action: neighbor.action, state: neighbor.state, status: 'skipped',
+          reason: reason, depth: currentNode.depth + 1, parentId: currentNode.id, h: neighbor.h
+        });
+      }
+    }
+
+    if (isBetter && bestChildNode) {
+      reached.add(stateKey(bestChildNode.state));
+      yield {
+        iter, popped: snapshotPopped(currentNode), poppedIndex: 0,
+        children, frontierBefore,
+        frontierAfter: [snapshotPopped(bestChildNode)],
+        reachedAfter: snapshotReached(reached),
+        done: statesEqual(bestChildNode.state, goal),
+        success: statesEqual(bestChildNode.state, goal),
+        goalNode: statesEqual(bestChildNode.state, goal) ? bestChildNode : null,
+      };
+
+      currentNode = bestChildNode;
+      if (statesEqual(currentNode.state, goal)) {
+        return;
+      }
+    } else {
+      yield {
+        iter, popped: snapshotPopped(currentNode), poppedIndex: 0,
+        children, frontierBefore,
+        frontierAfter: [],
+        reachedAfter: snapshotReached(reached),
+        done: true,
+        success: false,
+        goalNode: null,
+        expansionMessage: `Dừng: Đạt cực đại cục bộ (không có trạng thái lân cận nào tốt hơn current)`,
+      };
+      return;
+    }
+  }
+}
+
+const ALGORITHMS = { bfs, dfs, ids, ucs, greedy, astar, idastar, simpleHillClimbing, steepestAscentHillClimbing };
