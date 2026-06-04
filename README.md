@@ -35,6 +35,14 @@ Dự án hỗ trợ 9 thuật toán tìm kiếm phổ biến chia thành các nh
 ### 3. Tìm kiếm cục bộ (Local Search)
 *   **Leo núi đơn giản (Simple Hill Climbing)**: Đánh giá lần lượt các lân cận theo thứ tự hành động. Chọn ngay lân cận đầu tiên tốt hơn trạng thái hiện tại. Dừng khi đạt cực đại cục bộ.
 *   **Leo dốc nhất (Steepest-Ascent Hill Climbing)**: Đánh giá toàn bộ các lân cận hợp lệ, chọn ra lân cận có giá trị đánh giá tốt nhất. Chỉ di chuyển nếu lân cận tốt nhất này tốt hơn trạng thái hiện tại.
+*   **Chùm tia cục bộ (Local Beam Search)**: Khởi tạo với $k$ trạng thái lân cận ngẫu nhiên không trùng lặp từ Start (Bước 1). Từ Bước 2, thuật toán đánh giá đồng thời tất cả các lân cận của $k$ trạng thái trong Beam hiện tại và chọn ra $k$ trạng thái tốt nhất tiếp theo.
+*   **Leo núi thử lại ngẫu nhiên (Random Restart Hill Climbing)**: Thực hiện leo núi đơn giản. Khi bị kẹt ở cực đại cục bộ, thuật toán sẽ tự động xóa sạch Reached Set, reset chỉ số nút trở về $A_1$ và chạy lại từ trạng thái xuất phát ngẫu nhiên mới, thử lại tối đa `maxRestart` lần.
+
+---
+
+## 🎨 Cải tiến Trực quan
+*   **Đánh dấu ô trống**: Ô trống (số 0) được tô nền xám bán trong suốt kết hợp với viền mờ để người xem dễ dàng bám sát chuyển động di chuyển của ô trống qua từng bước lặp.
+*   **Hiển thị trùng lặp nhãn**: Trạng thái Reached Set tự động gom nhóm và thể hiện nhiều nhãn khác nhau (ví dụ: `A2, A4`) nếu có nhiều nút khác nhau có cùng chung một trạng thái bảng.
 
 ---
 

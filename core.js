@@ -33,7 +33,7 @@ function statesEqual(a, b) {
   return true;
 }
 
-/** Apply action — return new state, or null if invalid. */
+// Apply action and return new state, or null if invalid
 function applyAction(state, action) {
   const bi = blankIndex(state);
   const { r, c } = rcOf(bi);
@@ -48,7 +48,7 @@ function applyAction(state, action) {
   return next;
 }
 
-/** Đếm số ô (≠ blank) sai vị trí so với goal. */
+// Count misplaced tiles compared to goal state
 function misplacedCount(state, goal) {
   let c = 0;
   for (let i = 0; i < 9; i++) {
@@ -57,7 +57,7 @@ function misplacedCount(state, goal) {
   return c;
 }
 
-/** Tổng Manhattan distance |Δrow|+|Δcol| cho mọi ô non-blank. */
+// Calculate total Manhattan distance for non-blank tiles
 function manhattanDistance(state, goal) {
   const goalPos = new Map();
   for (let i = 0; i < 9; i++) goalPos.set(goal[i], rcOf(i));
@@ -72,12 +72,11 @@ function manhattanDistance(state, goal) {
   return sum;
 }
 
-/** Kiểm tra puzzle có solvable không (8-puzzle: inversion count chẵn). */
+// Check if puzzle is solvable using inversion counts
 function isSolvable(state, goal) {
-  // Cho phép goal tuỳ ý — so sánh permutation parity.
   const pos = new Map();
   for (let i = 0; i < 9; i++) pos.set(goal[i], i);
-  // ánh xạ về dạng "goal là 1..8,0" để đếm nghịch thế
+  // Map to target position indexes to count inversions
   const mapped = state.filter(v => v !== 0).map(v => pos.get(v));
   let inv = 0;
   for (let i = 0; i < mapped.length; i++) {
@@ -88,14 +87,10 @@ function isSolvable(state, goal) {
   return inv % 2 === 0;
 }
 
-/* ============================================================
-   PRESETS — Start/Goal mặc định cho mỗi thuật toán,
-            đảm bảo path ngắn nhất = 2 bước (2 actions).
-============================================================ */
+// Default presets for each search algorithm
 const GOAL_DEFAULT = [1, 2, 3, 4, 5, 6, 7, 8, 0];
 
 const PRESETS = {
-  // Start: blank ở (1,1). Goal: blank ở (2,2). 2 bước: D, R.
   bfs: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
   dfs: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
   ids: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
@@ -105,18 +100,24 @@ const PRESETS = {
   idastar: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
   simpleHillClimbing: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
   steepestAscentHillClimbing: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
+  localbeam: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
+  ramdomreset: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
+  stochastic: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
 };
 
 const ALGO_META = {
-  bfs: { name: 'BFS', formula: 'Không có ( duyệt theo bề rộng, frontier = FIFO )' },
-  dfs: { name: 'DFS', formula: 'Không có ( duyệt theo chiều sâu, frontier = LIFO )' },
-  ids: { name: 'IDS', formula: 'Duyệt sâu dần ( DLS với limit = 0, 1, 2... )' },
-  ucs: { name: 'UCS', formula: 'g( child ) = g( parent ) + số ô sai của child' },
-  greedy: { name: 'Greedy', formula: 'h( n ) = Σ Manhattan |Δrow| + |Δcol|  ( trừ blank )' },
-  astar: { name: 'A*', formula: 'f( n ) = g( n ) + h( n )  ( g = số ô sai cả blank, h = Manhattan )' },
-  idastar: { name: 'IDA*', formula: 'f( n ) = g( n ) + h( n )  ( g = depth, h = Manhattan, giới hạn theo f )' },
-  simpleHillClimbing: { name: 'Leo núi đơn giản', formula: 'h( n ) = Σ Manhattan |Δrow| + |Δcol| (chọn lân cận đầu tiên tốt hơn)' },
-  steepestAscentHillClimbing: { name: 'Leo dốc nhất', formula: 'h( n ) = Σ Manhattan |Δrow| + |Δcol| (chọn lân cận tốt nhất trong tất cả)' },
+  bfs: { name: 'BFS', formula: 'None (Breadth-First Search, frontier = FIFO)' },
+  dfs: { name: 'DFS', formula: 'None (Depth-First Search, frontier = LIFO)' },
+  ids: { name: 'IDS', formula: 'Iterative Deepening Search (DLS with limit = 0, 1, 2...)' },
+  ucs: { name: 'UCS', formula: 'g(child) = g(parent) + step_cost' },
+  greedy: { name: 'Greedy', formula: 'h(n) = Σ Manhattan distance (excluding blank)' },
+  astar: { name: 'A*', formula: 'f(n) = g(n) + h(n) (g = path cost, h = Manhattan)' },
+  idastar: { name: 'IDA*', formula: 'f(n) = g(n) + h(n) (g = depth, h = Manhattan, limited by f)' },
+  simpleHillClimbing: { name: 'Simple Hill Climbing', formula: 'h(n) = Σ Manhattan distance (chooses first better neighbor)' },
+  steepestAscentHillClimbing: { name: 'Steepest Ascent Hill Climbing', formula: 'h(n) = Σ Manhattan distance (chooses best neighbor overall)' },
+  localbeam: { name: 'Local Beam Search', formula: 'h(n) = Σ Manhattan distance (maintains k best states, filters duplicates)' },
+  ramdomreset: { name: 'Random Restart Hill Climbing', formula: 'h(n) = Σ Manhattan distance (restarts up to k times when stuck)' },
+  stochastic: { name: 'Stochastic Hill Climbing', formula: 'h(n) = Σ Manhattan distance (randomly chooses better neighbor)' },
 };
 
 function getStepCost(stateArr, goalArr, parentStateArr, gType) {

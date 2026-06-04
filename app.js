@@ -1,6 +1,257 @@
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
+const PSEUDOCODE = {
+  bfs: `function Breadth_First_Search(Start, Goal):
+  Frontier = FIFOQueue([Start])
+  Reached = Set([Start])
+  while Frontier is not empty:
+    Node = Frontier.pop_left()
+    if Node.state == Goal:
+      return Node (Success)
+    for each Action in [L, R, U, D]:
+      Child = ChildNode(Node, Action)
+      if Child is valid:
+        if Child.state is not in Reached:
+          add Child.state to Reached
+          Frontier.append(Child)
+  return Failure`,
+
+  dfs: `function Depth_First_Search(Start, Goal):
+  Frontier = Stack([Start])
+  Reached = Set([Start])
+  while Frontier is not empty:
+    Node = Frontier.pop()
+    if Node.state == Goal:
+      return Node (Success)
+    for each Action in [L, R, U, D]:
+      Child = ChildNode(Node, Action)
+      if Child is valid:
+        if Child.state is not in Reached:
+          add Child.state to Reached
+          Frontier.push(Child)
+  return Failure`,
+
+  ids: `function Iterative_Deepening_Search(Start, Goal):
+  for Depth_Limit = 0, 1, 2, ...:
+    Result = Depth_Limited_Search(Start, Goal, Depth_Limit)
+    if Result is GoalNode:
+      return Result (Success)
+    if Result is not Cutoff:
+      return Failure
+
+function Depth_Limited_Search(Node, Goal, Limit):
+  if Node.state == Goal:
+    return Node
+  if Limit == 0:
+    return Cutoff
+  Cutoff_Occurred = False
+  for each Action in [L, R, U, D]:
+    Child = ChildNode(Node, Action)
+    if Child is valid:
+      if not IsCycle(Child):
+        Result = Depth_Limited_Search(Child, Goal, Limit - 1)
+        if Result == Goal: return Result
+        if Result == Cutoff: Cutoff_Occurred = True
+  return Cutoff if Cutoff_Occurred else Failure`,
+
+  ucs: `function Uniform_Cost_Search(Start, Goal):
+  Frontier = PriorityQueue(ordered by path cost g)
+  Reached = Set([Start])
+  add Start to Frontier with path cost 0
+  while Frontier is not empty:
+    Node = Frontier.pop_min()
+    if Node.state == Goal:
+      return Node (Success)
+    for each Action in [L, R, U, D]:
+      Child = ChildNode(Node, Action)
+      if Child is valid:
+        if Child.state is not in Reached or Child.g < Reached[Child.state].g:
+          add Child.state to Reached with cost Child.g
+          Frontier.insert_or_update(Child)
+  return Failure`,
+
+  greedy: `function Greedy_Best_First_Search(Start, Goal):
+  Frontier = PriorityQueue(ordered by heuristic h)
+  Reached = Set([Start])
+  add Start to Frontier with priority h(Start)
+  while Frontier is not empty:
+    Node = Frontier.pop_min()
+    if Node.state == Goal:
+      return Node (Success)
+    for each Action in [L, R, U, D]:
+      Child = ChildNode(Node, Action)
+      if Child is valid:
+        if Child.state is not in Reached:
+          add Child.state to Reached
+          Frontier.insert(Child)
+  return Failure`,
+
+  astar: `function A_Star_Search(Start, Goal):
+  Frontier = PriorityQueue(ordered by f = g + h)
+  Reached = Set([Start])
+  add Start to Frontier with priority f(Start) = h(Start)
+  while Frontier is not empty:
+    Node = Frontier.pop_min()
+    if Node.state == Goal:
+      return Node (Success)
+    for each Action in [L, R, U, D]:
+      Child = ChildNode(Node, Action)
+      if Child is valid:
+        if Child.state is not in Reached or Child.g < Reached[Child.state].g:
+          add Child.state to Reached with cost Child.g
+          Frontier.insert_or_update(Child)
+  return Failure`,
+
+  idastar: `function IDA_Star(Start, Goal):
+  Limit = f(Start) = h(Start)
+  while True:
+    Next_Limit, Result = Search(Start, 0, Limit, Goal)
+    if Result is GoalNode:
+      return Result (Success)
+    if Next_Limit == Infinity:
+      return Failure
+    Limit = Next_Limit
+
+function Search(Node, g, Limit, Goal):
+  f = g + h(Node)
+  if f > Limit:
+    return f, Cutoff
+  if Node.state == Goal:
+    return Limit, Node
+  Min_Limit = Infinity
+  for each Action in [L, R, U, D]:
+    Child = ChildNode(Node, Action)
+    if Child is valid:
+      if not IsCycle(Child):
+        Next_Limit, Result = Search(Child, g + Cost(Node, Child), Limit, Goal)
+        if Result is GoalNode:
+          return Next_Limit, Result
+        if Next_Limit < Min_Limit:
+          Min_Limit = Next_Limit
+  return Min_Limit, Cutoff`,
+
+  simpleHillClimbing: `function Simple_Hill_Climbing(Start, Goal):
+  Current = Start
+  while True:
+    if Current == Goal:
+      return Current (Success)
+    Neighbors = GenerateNeighbors(Current)
+    Better_Neighbor = None
+    for Neighbor in Neighbors:
+      if h(Neighbor) < h(Current):
+        Better_Neighbor = Neighbor
+        break // Select the first better neighbor
+    if Better_Neighbor is None:
+      return Current (Stuck at local minimum)
+    Current = Better_Neighbor`,
+
+  steepestAscentHillClimbing: `function Steepest_Ascent_Hill_Climbing(Start, Goal):
+  Current = Start
+  while True:
+    if Current == Goal:
+      return Current (Success)
+    Neighbors = GenerateNeighbors(Current)
+    Best_Neighbor = None
+    for Neighbor in Neighbors:
+      if h(Neighbor) < h(Current):
+        if Best_Neighbor is None or h(Neighbor) < h(Best_Neighbor):
+          Best_Neighbor = Neighbor // Select the best neighbor overall
+    if Best_Neighbor is None:
+      return Current (Stuck at local minimum)
+    Current = Best_Neighbor`,
+  
+  localbeam: `function Local_Beam_Search(Start, Goal, k):
+  1. Initialization:
+     Current_State_set = {Generate k random states from Start}
+  2. WHILE (True):
+     Neighbor_States = empty
+     2.1. GENERATE NEIGHBOR STATES:
+     FOR EACH State in Current_State_set:
+       Generate all neighboring states of State.
+       Add these neighboring states to Neighbor_States.
+     2.2. CHECK DEADLOCK / NO IMPROVEMENT:
+     IF Neighbor_States is empty:
+       Sort Current_State_set by h ascending
+       RETURN best state in Current_State_set (deadlock)
+     2.3. CHECK GOAL:
+     FOR EACH Neighbor in Neighbor_States:
+       IF Neighbor == Goal: RETURN Neighbor (Success)
+     2.4. BEAM SELECTION:
+     Sort Neighbor_States by objective function h ascending
+     Current_State_set = Take k best states from sorted Neighbor_States`,
+
+  ramdomreset: `function Random_Restart_Hill_Climbing(Start, Goal, Max_Restart):
+  overallReached = Set([Start])
+  for i = 1 to Max_Restart:
+    Current = Start
+    runReached = Set([Start])
+    while True:
+      if Current == Goal:
+        return Current (Success)
+      Neighbors = GenerateNeighbors(Current)
+      Better_Neighbors = { N | h(N) < h(Current) and N not in runReached }
+      if Better_Neighbors is empty:
+        break // Stuck, restart from iteration i + 1
+      else:
+        Current = RandomSelect(Better_Neighbors)
+        add Current to runReached, overallReached
+  return Failure (Reached Max Restarts)`,
+
+  stochastic: `function Stochastic_Hill_Climbing(Start, Goal):
+  Current = Start
+  Reached = Set([Start])
+  while True:
+    if Current == Goal:
+      return Current (Success)
+    Neighbors = GenerateNeighbors(Current)
+    Better_Neighbors = { N | h(N) < h(Current) and N not in Reached }
+    if Better_Neighbors is empty:
+      return Current (Stuck at local minimum)
+    else:
+      Current = RandomSelect(Better_Neighbors)
+      add Current to Reached`
+};
+
+function translateReason(r) {
+  if (!r) return '';
+  return r
+    .replace(/không thể di chuyển/g, 'invalid move')
+    .replace(/TRÙNG GOAL/g, 'GOAL MATCH')
+    .replace(/đã trong reached/g, 'already in reached')
+    .replace(/đã trong frontier/g, 'already in frontier')
+    .replace(/thêm vào frontier/g, 'added to frontier')
+    .replace(/thêm/g, 'added')
+    .replace(/trùng lặp trong bước/g, 'duplicate in step')
+    .replace(/đã đi qua trong lượt này/g, 'already visited in this run')
+    .replace(/đạt giới hạn độ sâu/g, 'depth limit reached')
+    .replace(/tạo chu trình/g, 'cycle detected')
+    .replace(/trùng với tổ tiên/g, 'matches ancestor')
+    .replace(/đã lặp/g, 'already in reached')
+    .replace(/không tốt hơn/g, 'not better')
+    .replace(/tốt hơn/g, 'better')
+    .replace(/tốt nhất/g, 'best')
+    .replace(/vượt ngưỡng/g, 'cutoff')
+    .replace(/cập nhật từ reached/g, 'updated from reached')
+    .replace(/cập nhật trong frontier/g, 'updated in frontier');
+}
+
+function translateMessage(m) {
+  if (!m) return '';
+  return m
+    .replace(/Không mở rộng: Đạt giới hạn độ sâu/g, 'Cutoff: Depth limit reached')
+    .replace(/Không mở rộng: Tạo chu trình \(trùng với tổ tiên\)/g, 'Cutoff: Cycle detected (matches ancestor)')
+    .replace(/Dừng: Đạt cực đại cục bộ \(không có trạng thái lân cận nào tốt hơn\)/g, 'Stuck: Local maximum reached (no neighbor is better)')
+    .replace(/Dừng: Đạt cực đại cục bộ \(không có trạng thái lân cận nào tốt hơn current\)/g, 'Stuck: Local maximum reached (no neighbor is better)')
+    .replace(/Khởi động lại \(Lượt (\d+)\/(\d+)\)/g, 'Restarting (Iteration $1/$2)')
+    .replace(/Bị kẹt ở cực đại cục bộ \(Lượt (\d+)\/(\d+)\)/g, 'Stuck at local maximum (Iteration $1/$2)')
+    .replace(/Thất bại: Đã thử lại tối đa (\d+) lần nhưng không tìm thấy đích/g, 'Failed: Reached maximum restart limit of $1 without finding goal')
+    .replace(/Dừng: Không còn trạng thái lân cận nào mới để đi tiếp \(bế tắc\)/g, 'Stuck: No new neighbors to explore (deadlock)')
+    .replace(/Dừng: Đạt cực đại cục bộ \(không có lân cận nào tốt hơn\)/g, 'Stuck: Local maximum reached (no neighbor is better)')
+    .replace(/Khởi tạo: Sinh ngẫu nhiên (\d+) trạng thái từ Start/g, 'Initialization: Generated $1 random states from Start')
+    .replace(/— \( hết frontier \)/g, '— (empty frontier)');
+}
+
 const state = {
   algo: 'bfs',
   start: PRESETS.bfs.start.slice(),
@@ -9,12 +260,14 @@ const state = {
   autoTimer: null,
   editMode: { start: false, goal: false },
   playback: { timer: null, idx: 0, path: null },
-  labels: new Map(),   // stateKey → letter label
+  labels: new Map(),   // map state to letter label
   gType: 'steps',
   hType: 'manhattan',
+  k: 3,
+  maxRestart: 5,
 };
 
-/* ---------- TABS ---------- */
+// Navigation tabs control
 function bindTabs() {
   $$('.tab').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -27,11 +280,12 @@ function bindTabs() {
       state.editMode = { start: false, goal: false };
       resetRun();
       renderAll();
+      renderPseudocode();
     });
   });
 }
 
-/* ---------- BOARDS ---------- */
+// Board editor and rendering logic
 function renderBoard(elId, stateArr, editing) {
   const el = document.getElementById(elId);
   el.innerHTML = '';
@@ -100,7 +354,7 @@ function toggleEdit(which) {
   if (state.editMode[which]) {
     const arr = which === 'start' ? state.start : state.goal;
     if (!validatePuzzle(arr)) {
-      alert('Trạng thái không hợp lệ. Cần 9 ô chứa các số 0..8 mỗi số đúng 1 lần ( 0 = ô trống ).');
+      alert('Invalid state. Board must contain digits 0-8 exactly once each (0 represents the blank space).');
       return;
     }
     state.editMode[which] = false;
@@ -111,7 +365,7 @@ function toggleEdit(which) {
   renderAll();
 }
 
-/* ---------- INFO ---------- */
+// Algorithmic information display
 function renderInfo() {
   const meta = ALGO_META[state.algo];
   $('#info-algo').textContent = meta.name;
@@ -120,10 +374,11 @@ function renderInfo() {
   formulaEl.innerHTML = '';
 
   const hasG = ['ucs', 'astar', 'idastar'].includes(state.algo);
-  const hasH = ['greedy', 'astar', 'idastar', 'simpleHillClimbing', 'steepestAscentHillClimbing'].includes(state.algo);
+  const hasH = ['greedy', 'astar', 'idastar', 'simpleHillClimbing', 'steepestAscentHillClimbing', 'localbeam', 'ramdomreset', 'stochastic'].includes(state.algo);
 
   if (!hasG && !hasH) {
-    formulaEl.textContent = 'Không có';
+    formulaEl.textContent = 'None';
+    $('#info-param-row').style.display = 'none';
     return;
   }
 
@@ -143,10 +398,10 @@ function renderInfo() {
     selectG.className = 'formula-select';
 
     const optionsG = [
-      { value: 'steps', text: 'g(n): Số bước (mặc định)' },
+      { value: 'steps', text: 'g(n): Path cost (default)' },
       { value: 'manhattan', text: 'g(n): Manhattan' },
-      { value: 'misplaced', text: 'g(n): Số ô sai' },
-      { value: 'swap', text: 'g(n): Giá trị swap' }
+      { value: 'misplaced', text: 'g(n): Misplaced tiles' },
+      { value: 'swap', text: 'g(n): Swapped tile value' }
     ];
 
     optionsG.forEach(opt => {
@@ -178,9 +433,9 @@ function renderInfo() {
     selectH.className = 'formula-select';
 
     const optionsH = [
-      { value: 'manhattan', text: 'h(n): Manhattan (mặc định)' },
-      { value: 'misplaced', text: 'h(n): Số ô sai' },
-      { value: 'swap', text: 'h(n): Giá trị swap' }
+      { value: 'manhattan', text: 'h(n): Manhattan (default)' },
+      { value: 'misplaced', text: 'h(n): Misplaced tiles' },
+      { value: 'swap', text: 'h(n): Swapped tile value' }
     ];
 
     optionsH.forEach(opt => {
@@ -201,11 +456,57 @@ function renderInfo() {
   }
 
   formulaEl.appendChild(container);
+
+  // Dynamic parameters row
+  const paramRow = $('#info-param-row');
+  const paramLabel = $('#info-param-label');
+  const paramVal = $('#info-param-value');
+
+  if (state.algo === 'localbeam') {
+    paramRow.style.display = 'grid';
+    paramLabel.textContent = 'Beam Width (k)';
+    paramVal.innerHTML = '';
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.className = 'formula-select';
+    input.style.width = '70px';
+    input.min = '1';
+    input.max = '20';
+    input.value = state.k;
+    input.addEventListener('change', (e) => {
+      let val = parseInt(e.target.value);
+      if (isNaN(val) || val < 1) val = 1;
+      state.k = val;
+      resetRun();
+      renderAll();
+    });
+    paramVal.appendChild(input);
+  } else if (state.algo === 'ramdomreset') {
+    paramRow.style.display = 'grid';
+    paramLabel.textContent = 'Max Restarts';
+    paramVal.innerHTML = '';
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.className = 'formula-select';
+    input.style.width = '70px';
+    input.min = '1';
+    input.max = '50';
+    input.value = state.maxRestart;
+    input.addEventListener('change', (e) => {
+      let val = parseInt(e.target.value);
+      if (isNaN(val) || val < 1) val = 1;
+      state.maxRestart = val;
+      resetRun();
+      renderAll();
+    });
+    paramVal.appendChild(input);
+  } else {
+    paramRow.style.display = 'none';
+  }
 }
 
-/* ---------- CONTROLS ---------- */
+// Visualizer controls
 function bindControls() {
-  $('#btn-run').addEventListener('click', onRun);
   $('#btn-step').addEventListener('click', onStep);
   $('#btn-auto').addEventListener('click', onAuto);
   $('#btn-pause').addEventListener('click', onPause);
@@ -222,13 +523,17 @@ function bindControls() {
 function ensureGenerator() {
   if (state.run && state.run.gen) return true;
   if (!validatePuzzle(state.start) || !validatePuzzle(state.goal)) {
-    alert('Start hoặc Goal chưa hợp lệ.');
+    alert('Start or Goal state is invalid.');
     return false;
   }
-  if (!isSolvable(state.start, state.goal)) {
-    if (!confirm('Cảnh báo: cấu hình Start → Goal có thể KHÔNG giải được. Vẫn chạy?')) return false;
+  let gen;
+  if (state.algo === 'localbeam') {
+    gen = ALGORITHMS[state.algo](state.start.slice(), state.goal.slice(), state.gType, state.hType, state.k);
+  } else if (state.algo === 'ramdomreset') {
+    gen = ALGORITHMS[state.algo](state.start.slice(), state.goal.slice(), state.gType, state.hType, state.maxRestart);
+  } else {
+    gen = ALGORITHMS[state.algo](state.start.slice(), state.goal.slice(), state.gType, state.hType);
   }
-  const gen = ALGORITHMS[state.algo](state.start.slice(), state.goal.slice(), state.gType, state.hType);
   state.run = {
     gen, steps: [], finished: false, success: false, goalNode: null,
     finalReached: [],
@@ -239,17 +544,41 @@ function ensureGenerator() {
 }
 
 function trackLabels(step) {
+  // Clear accumulated labels when a restart occurs to reset labels back to A1
+  if (step.expansionMessage && (step.expansionMessage.includes('Khởi động lại') || step.expansionMessage.includes('Restart') || step.expansionMessage.includes('restart'))) {
+    state.labels = new Map();
+  }
+
+  const addLabel = (stateKeyStr, label) => {
+    if (!state.labels.has(stateKeyStr)) {
+      state.labels.set(stateKeyStr, new Set());
+    }
+    state.labels.get(stateKeyStr).add(label);
+  };
+
+  if (step.poppedNodes) {
+    step.poppedNodes.forEach(pn => {
+      if (pn && pn.id !== undefined && pn.id >= 0) {
+        addLabel(stateKey(pn.state), toLabel(pn.id));
+      }
+    });
+  }
   if (step.popped && step.popped.id !== undefined && step.popped.id >= 0) {
-    state.labels.set(stateKey(step.popped.state), toLabel(step.popped.id));
+    addLabel(stateKey(step.popped.state), toLabel(step.popped.id));
   }
   (step.children || []).forEach(c => {
     if (c.state && c.id !== undefined && c.id >= 0) {
-      state.labels.set(stateKey(c.state), toLabel(c.id));
+      addLabel(stateKey(c.state), toLabel(c.id));
+    }
+  });
+  (step.frontierBefore || []).forEach(n => {
+    if (n.state && n.id !== undefined && n.id >= 0) {
+      addLabel(stateKey(n.state), toLabel(n.id));
     }
   });
   (step.frontierAfter || []).forEach(n => {
     if (n.id !== undefined && n.id >= 0) {
-      state.labels.set(stateKey(n.state), toLabel(n.id));
+      addLabel(stateKey(n.state), toLabel(n.id));
     }
   });
 }
@@ -272,12 +601,6 @@ function consumeOneStep() {
   return value;
 }
 
-function onRun() {
-  resetRun();
-  if (!ensureGenerator()) return;
-  while (!state.run.finished) consumeOneStep();
-  renderAll();
-}
 
 function onStep() {
   onPause();
@@ -318,38 +641,48 @@ function resetRun() {
   state.labels = new Map();
 }
 
-/* ---------- LABELS ---------- */
 function toLabel(id) {
   if (id === null || id === undefined || id < 0) return '?';
-  let n = id;
-  let s = '';
-  do {
-    s = String.fromCharCode(65 + (n % 26)) + s;
-    n = Math.floor(n / 26) - 1;
-  } while (n >= 0);
-  return s;
+  return `A<sub>${id + 1}</sub>`;
 }
 
 function labelForState(stateArr) {
-  return state.labels.get(stateKey(stateArr)) || '?';
+  const s = state.labels.get(stateKey(stateArr));
+  if (!s) return '?';
+  return Array.from(s).join(', ');
 }
 
-/* ---------- MINI BOARD ---------- */
+// Miniature board visualization
+function getMovedIndex(state, action) {
+  if (!action) return -1;
+  const bi = state.indexOf(0);
+  const { r, c } = rcOf(bi);
+  const delta = ACTION_DELTA[action];
+  if (!delta) return -1;
+  const parentR = r - delta.dr;
+  const parentC = c - delta.dc;
+  if (parentR < 0 || parentR > 2 || parentC < 0 || parentC > 2) return -1;
+  return idxOf(parentR, parentC);
+}
+
 function miniBoard(arr, opts = {}) {
   const div = document.createElement('div');
   div.className = 'mini-board' + (opts.goal ? ' goal-tile' : '');
   for (let i = 0; i < 9; i++) {
     const c = document.createElement('div');
     c.className = 'mini-cell' + (arr[i] === 0 ? ' blank' : '');
+    if (opts.movedIndex !== undefined && i === opts.movedIndex) {
+      c.classList.add('moved-tile');
+    }
     c.textContent = arr[i] === 0 ? '' : String(arr[i]);
     div.appendChild(c);
   }
   return div;
 }
 
-/* ---------- SET NOTATION  { grid , parent , action , depth } = label ---------- */
+// Render node state notation showing state grid, parent label, action, and depth
 function renderSetNotation(item, opts = {}) {
-  /*  item = { state, action, depth, id, parentId, g, h, status }  */
+  // item fields: state, action, depth, id, parentId, g, h, status
   const node = document.createElement('div');
   node.className = 'set-notation';
   const kind = opts.kind;
@@ -360,7 +693,7 @@ function renderSetNotation(item, opts = {}) {
   if (kind === 'cutoff') node.classList.add('is-cutoff');
   if (kind === 'just-added') { node.classList.add('is-added', 'is-just-added'); }
 
-  // Trường hợp invalid : không có grid, chỉ in dòng "action: invalid"
+  // Handle invalid move case by showing action with invalid status
   if (item.status === 'invalid') {
     node.classList.add('invalid-row');
     const act = document.createElement('span');
@@ -379,17 +712,18 @@ function renderSetNotation(item, opts = {}) {
   const open = document.createElement('span'); open.className = 'brace'; open.textContent = '{';
   node.appendChild(open);
 
-  // grid with cost
+  // Render mini board with cost indicators
   const gridContainer = document.createElement('div');
   gridContainer.className = 'grid-container-with-cost';
-  gridContainer.appendChild(miniBoard(item.state));
+  const movedIndex = getMovedIndex(item.state, item.action);
+  gridContainer.appendChild(miniBoard(item.state, { movedIndex }));
 
   if (state.algo === 'ucs' && item.g !== undefined) {
     const costDiv = document.createElement('div');
     costDiv.className = 'node-cost-sub';
     costDiv.textContent = `g = ${item.g}`;
     gridContainer.appendChild(costDiv);
-  } else if ((state.algo === 'greedy' || state.algo === 'simpleHillClimbing' || state.algo === 'steepestAscentHillClimbing') && item.h !== undefined) {
+  } else if ((state.algo === 'greedy' || state.algo === 'simpleHillClimbing' || state.algo === 'steepestAscentHillClimbing' || state.algo === 'localbeam' || state.algo === 'ramdomreset' || state.algo === 'stochastic') && item.h !== undefined) {
     const costDiv = document.createElement('div');
     costDiv.className = 'node-cost-sub';
     costDiv.textContent = `h = ${item.h}`;
@@ -403,43 +737,55 @@ function renderSetNotation(item, opts = {}) {
 
   node.appendChild(gridContainer);
 
-  // , parent_label
+  // Show parent node label
   const sep1 = document.createElement('span'); sep1.className = 'sep'; sep1.textContent = ',';
   node.appendChild(sep1);
   const parentLabel = document.createElement('span');
   parentLabel.className = 'parent-label';
-  parentLabel.textContent = (item.parentId === null || item.parentId === undefined)
+  parentLabel.innerHTML = (item.parentId === null || item.parentId === undefined)
     ? '∅'
     : toLabel(item.parentId);
   node.appendChild(parentLabel);
 
-  // , action
+  // Show action direction
   const sep2 = document.createElement('span'); sep2.className = 'sep'; sep2.textContent = ',';
   node.appendChild(sep2);
   const act = document.createElement('span'); act.className = 'action-letter';
   act.textContent = item.action || '—';
   node.appendChild(act);
 
-  // , depth
+  // Show node evaluation cost value
   const sep3 = document.createElement('span'); sep3.className = 'sep'; sep3.textContent = ',';
   node.appendChild(sep3);
-  const dep = document.createElement('span'); dep.className = 'depth-num';
-  dep.textContent = String(item.depth ?? 0);
-  node.appendChild(dep);
+  const costEl = document.createElement('span'); costEl.className = 'cost-num';
+  
+  let costVal = 0;
+  if (['astar', 'idastar'].includes(state.algo)) {
+    costVal = (item.g ?? 0) + (item.h ?? 0);
+  } else if (state.algo === 'ucs') {
+    costVal = item.g ?? 0;
+  } else if (['greedy', 'simpleHillClimbing', 'steepestAscentHillClimbing', 'localbeam', 'ramdomreset', 'stochastic'].includes(state.algo)) {
+    costVal = item.h ?? 0;
+  } else {
+    costVal = item.depth ?? 0;
+  }
+
+  costEl.textContent = String(costVal);
+  node.appendChild(costEl);
 
   const close = document.createElement('span'); close.className = 'brace'; close.textContent = '}';
   node.appendChild(close);
 
-  // = label  ( chỉ với node có id )
+  // Show assigned letter label for node if it exists
   if (item.id !== undefined && item.id !== null && item.id >= 0) {
     const eq = document.createElement('span'); eq.className = 'eq'; eq.textContent = '=';
     node.appendChild(eq);
     const lab = document.createElement('span'); lab.className = 'child-label';
-    lab.textContent = toLabel(item.id);
+    lab.innerHTML = toLabel(item.id);
     node.appendChild(lab);
   }
 
-  // tag trạng thái ( cho expansion list )
+  // Add execution status tags for children expansion
   if (opts.tag) {
     const t = document.createElement('span');
     t.className = 'tag tag-' + opts.tag;
@@ -450,13 +796,13 @@ function renderSetNotation(item, opts = {}) {
   return node;
 }
 
-/* ---------- RENDER ---------- */
+// Render visualizer components
 function renderAll() {
   renderInfo();
   renderBoard('board-start', state.start, state.editMode.start);
   renderBoard('board-goal', state.goal, state.editMode.goal);
-  $('#edit-start').textContent = state.editMode.start ? 'Xong' : 'Sửa';
-  $('#edit-goal').textContent = state.editMode.goal ? 'Xong' : 'Sửa';
+  $('#edit-start').textContent = state.editMode.start ? 'Done' : 'Edit';
+  $('#edit-goal').textContent = state.editMode.goal ? 'Done' : 'Edit';
 
   renderStatus();
   renderTrace();
@@ -474,22 +820,20 @@ function renderStatus() {
   stat.classList.remove('tag-success', 'tag-fail', 'tag-run');
   if (!run) { stat.textContent = '—'; }
   else if (run.finished && run.success) { stat.textContent = 'GOAL'; stat.classList.add('tag-success'); }
-  else if (run.finished && !run.success) { stat.textContent = 'THẤT BẠI'; stat.classList.add('tag-fail'); }
+  else if (run.finished && !run.success) { stat.textContent = 'FAILED'; stat.classList.add('tag-fail'); }
   else {
     if (state.algo === 'ids' && last && last.limit !== undefined) {
-      stat.textContent = `đang chạy (d=${last.limit})`;
+      stat.textContent = `running (d=${last.limit})`;
     } else if (state.algo === 'idastar' && last && last.limit !== undefined) {
-      stat.textContent = `đang chạy (f=${last.limit})`;
+      stat.textContent = `running (f=${last.limit})`;
     } else {
-      stat.textContent = 'đang chạy';
+      stat.textContent = 'running';
     }
     stat.classList.add('tag-run');
   }
 }
 
-/* ---------- LIVE FRONTIER PANEL — đã loại bỏ ( user yêu cầu ) ---------- */
-
-/* ---------- TRACE TABLE ---------- */
+// Trace table rendering logic
 function renderTrace() {
   const tbody = $('#trace-body');
   tbody.innerHTML = '';
@@ -501,48 +845,75 @@ function renderTrace() {
     if (idx === state.run.steps.length - 1) tr.classList.add('current');
     if (step.done && step.success) tr.classList.add('goal-row');
 
-    // #
+    // Render step index
     const tdStep = document.createElement('td');
     tdStep.className = 'col-step';
     tdStep.textContent = step.iter;
     tr.appendChild(tdStep);
 
-    // Node ( popped — KHÔNG tô đỏ theo yêu cầu )
+    // Render popped node without color highlights
     const tdNode = document.createElement('td');
     tdNode.className = 'col-node';
-    if (step.popped) {
+    if (step.poppedNodes) {
+      const container = document.createElement('div');
+      container.style.display = 'flex';
+      container.style.flexDirection = 'column';
+      container.style.gap = '8px';
+      step.poppedNodes.forEach(pn => {
+        const setNode = renderSetNotation(pn, { kind: null });
+        container.appendChild(setNode);
+      });
+      tdNode.appendChild(container);
+    } else if (step.popped) {
       const setNode = renderSetNotation(step.popped, { kind: null });
       tdNode.appendChild(setNode);
     } else {
-      tdNode.textContent = '— ( hết frontier )';
+      tdNode.textContent = '— ( empty frontier )';
     }
     tr.appendChild(tdNode);
 
-    // Frontier ( popped được tô đỏ ở đây , kèm 4 children mở rộng )
+    // Render frontier expansion list
     const tdFront = document.createElement('td');
     tdFront.className = 'col-frontier';
 
     if (step.limit !== undefined && (state.algo === 'ids' || state.algo === 'idastar')) {
       const limitTitle = document.createElement('div');
       limitTitle.className = 'limit-header';
-      limitTitle.textContent = `${state.algo === 'ids' ? 'ĐỘ SÂU GIỚI HẠN (LIMIT)' : 'NGƯỠNG GIỚI HẠN (LIMIT)'} = ${step.limit}`;
+      limitTitle.textContent = `${state.algo === 'ids' ? 'DEPTH LIMIT' : 'F-LIMIT'} = ${step.limit}`;
       tdFront.appendChild(limitTitle);
     }
 
-    // 1)  Popped node ( tô đỏ , nằm trong frontier column )
-    if (step.popped) {
+    // Render highlighted popped node
+    if (step.poppedNodes) {
       const poppedTitle = document.createElement('div');
       poppedTitle.style.color = 'var(--text-faint)';
       poppedTitle.style.fontSize = '12px';
       poppedTitle.style.marginBottom = '6px';
-      poppedTitle.textContent = 'VỪA POP KHỎI FRONTIER';
+      poppedTitle.textContent = 'CURRENT STATES IN BEAM (EVALUATING)';
+      tdFront.appendChild(poppedTitle);
+
+      const container = document.createElement('div');
+      container.style.display = 'flex';
+      container.style.flexDirection = 'column';
+      container.style.gap = '8px';
+      step.poppedNodes.forEach(pn => {
+        const setPopped = renderSetNotation(pn, { kind: 'popped' });
+        container.appendChild(setPopped);
+      });
+      tdFront.appendChild(container);
+    } else if (step.popped) {
+      const poppedTitle = document.createElement('div');
+      poppedTitle.style.color = 'var(--text-faint)';
+      poppedTitle.style.fontSize = '12px';
+      poppedTitle.style.marginBottom = '6px';
+      poppedTitle.textContent = 'POPPED FROM FRONTIER';
       tdFront.appendChild(poppedTitle);
 
       const setPopped = renderSetNotation(step.popped, { kind: 'popped' });
       tdFront.appendChild(setPopped);
     }
 
-    // 2)  Children expansion list
+    // Render expansion children list
     const expandTitle = document.createElement('div');
     expandTitle.style.color = 'var(--text-faint)';
     expandTitle.style.fontSize = '12px';
@@ -550,7 +921,7 @@ function renderTrace() {
     expandTitle.style.paddingTop = '8px';
     expandTitle.style.borderTop = '1px dashed var(--line)';
     expandTitle.style.marginBottom = '6px';
-    expandTitle.textContent = 'MỞ RỘNG ( L → R → U → D )';
+    expandTitle.textContent = 'EXPANSION ( L → R → U → D )';
     tdFront.appendChild(expandTitle);
 
     const list = document.createElement('div');
@@ -561,16 +932,18 @@ function renderTrace() {
       msg.style.fontWeight = 'bold';
       msg.style.fontSize = '13px';
       msg.style.marginTop = '4px';
+      msg.style.marginBottom = '8px';
       msg.style.fontStyle = 'italic';
-      msg.textContent = step.expansionMessage;
+      msg.textContent = translateMessage(step.expansionMessage);
       list.appendChild(msg);
-    } else {
+    }
+    if (step.children && step.children.length > 0) {
       step.children.forEach(ch => {
         let kind = null, tag = null, tagText = null;
-        if (ch.status === 'added') { kind = 'added'; tag = 'added'; tagText = 'THÊM'; }
+        if (ch.status === 'added') { kind = 'added'; tag = 'added'; tagText = 'ADDED'; }
         if (ch.status === 'goal') { kind = 'goal'; tag = 'goal'; tagText = 'GOAL'; }
-        if (ch.status === 'skipped') { kind = 'skipped'; tag = 'skipped'; tagText = 'BỎ QUA ( ' + (ch.reason || '') + ' )'; }
-        if (ch.status === 'cutoff') { kind = 'cutoff'; tag = 'cutoff'; tagText = 'VƯỢT NGƯỠNG ( ' + (ch.reason || '') + ' )'; }
+        if (ch.status === 'skipped') { kind = 'skipped'; tag = 'skipped'; tagText = 'SKIPPED ( ' + translateReason(ch.reason || '') + ' )'; }
+        if (ch.status === 'cutoff') { kind = 'cutoff'; tag = 'cutoff'; tagText = 'CUTOFF ( ' + translateReason(ch.reason || '') + ' )'; }
         if (ch.status === 'invalid') { kind = null; }
         const item = renderSetNotation({
           state: ch.state,
@@ -589,14 +962,15 @@ function renderTrace() {
 
     tr.appendChild(tdFront);
 
-    // Reached
+    // Render reached states list
     const tdReached = document.createElement('td');
     tdReached.className = 'col-reached';
     const reachedWrap = document.createElement('div');
     reachedWrap.className = 'reached-list';
     step.reachedAfter.forEach(k => {
       const arr = k.split('').map(Number);
-      const label = state.labels.get(k) || '?';
+      const labelsSet = state.labels.get(k);
+      const label = labelsSet ? Array.from(labelsSet).join(', ') : '?';
       const box = document.createElement('div');
       box.style.display = 'flex';
       box.style.flexDirection = 'column';
@@ -607,7 +981,7 @@ function renderTrace() {
       lab.style.fontSize = '11px';
       lab.style.fontWeight = '700';
       lab.style.color = 'var(--text-dim)';
-      lab.textContent = label;
+      lab.innerHTML = label;
       box.appendChild(lab);
       reachedWrap.appendChild(box);
     });
@@ -621,7 +995,7 @@ function renderTrace() {
   wrap.scrollTop = wrap.scrollHeight;
 }
 
-/* ---------- SOLUTION PLAYBACK ---------- */
+// Solution playback rendering
 function renderSolution() {
   const sec = $('#solution-section');
   const run = state.run;
@@ -632,8 +1006,8 @@ function renderSolution() {
   sec.hidden = false;
   const path = tracePath(run.goalNode);
   const actions = path.slice(1).map(n => n.action);
-  $('#sol-len').innerHTML = `Số bước : <b>${actions.length}</b>`;
-  $('#sol-actions').innerHTML = `Chuỗi action : <b>${actions.join(' → ') || '( đã ở goal )'}</b>`;
+  $('#sol-len').innerHTML = `Path length: <b>${actions.length}</b>`;
+  $('#sol-actions').innerHTML = `Action sequence: <b>${actions.join(' → ') || '(already at goal)'}</b>`;
 
   const strip = $('#solution-strip');
   strip.innerHTML = '';
@@ -649,9 +1023,13 @@ function renderSolution() {
     stepDiv.dataset.idx = String(i);
     const board = document.createElement('div');
     board.className = 'step-board';
+    const movedIndex = getMovedIndex(node.state, node.action);
     for (let j = 0; j < 9; j++) {
       const c = document.createElement('div');
       c.className = 'step-cell' + (node.state[j] === 0 ? ' blank' : '');
+      if (j === movedIndex) {
+        c.classList.add('moved-tile');
+      }
       c.textContent = node.state[j] === 0 ? '' : String(node.state[j]);
       board.appendChild(c);
     }
@@ -676,7 +1054,7 @@ function highlightPlayback(i) {
 function onPlaybackToggle() {
   if (!state.playback.path) return;
   if (state.playback.timer) { stopPlayback(); return; }
-  $('#btn-play-path').textContent = 'Dừng phát';
+  $('#btn-play-path').textContent = 'Stop Playback';
   const speed = Number($('#speed').value);
   state.playback.timer = setInterval(() => {
     state.playback.idx++;
@@ -685,23 +1063,55 @@ function onPlaybackToggle() {
       return;
     }
     highlightPlayback(state.playback.idx);
-    $('#playback-info').textContent = `Bước ${state.playback.idx} / ${state.playback.path.length - 1}`;
+    $('#playback-info').textContent = `Step ${state.playback.idx} / ${state.playback.path.length - 1}`;
   }, speed);
 }
 
 function stopPlayback() {
   if (state.playback.timer) clearInterval(state.playback.timer);
   state.playback.timer = null;
-  $('#btn-play-path').textContent = 'Phát lại đường đi';
+  $('#btn-play-path').textContent = 'Playback Path';
 }
 
-/* ---------- INIT ---------- */
+// Info card tabs interaction
+function bindInfoCardTabs() {
+  const tabDetails = $('#tab-info-details');
+  const tabPseudo = $('#tab-info-pseudo');
+  const paneDetails = $('#pane-info-details');
+  const panePseudo = $('#pane-info-pseudo');
+
+  if (tabDetails && tabPseudo) {
+    tabDetails.addEventListener('click', () => {
+      tabDetails.classList.add('active');
+      tabPseudo.classList.remove('active');
+      paneDetails.style.display = 'block';
+      panePseudo.style.display = 'none';
+    });
+
+    tabPseudo.addEventListener('click', () => {
+      tabPseudo.classList.add('active');
+      tabDetails.classList.remove('active');
+      panePseudo.style.display = 'block';
+      paneDetails.style.display = 'none';
+      renderPseudocode();
+    });
+  }
+}
+
+// Initialization
 function init() {
   bindTabs();
   bindBoardEditors();
   bindControls();
+  bindInfoCardTabs();
   $('#speed-val').textContent = $('#speed').value + 'ms';
   renderAll();
+  renderPseudocode();
+}
+
+function renderPseudocode() {
+  const code = PSEUDOCODE[state.algo] || 'No pseudocode available.';
+  $('#pseudocode-display').textContent = code;
 }
 
 document.addEventListener('DOMContentLoaded', init);

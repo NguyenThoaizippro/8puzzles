@@ -151,9 +151,9 @@ html, body {
 }
 
 .cell.blank {
-  background: transparent;
+  background: rgba(120, 120, 120, 0.25);
   color: transparent;
-  border: 1px dashed var(--line-2);
+  border: 1px solid rgba(120, 120, 120, 0.4);
 }
 
 .cell.editable {
@@ -193,7 +193,66 @@ html, body {
   border-radius: 6px;
   padding: 14px 16px;
   align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  min-height: 230px;
 }
+
+.info-card-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 12px;
+  gap: 16px;
+}
+
+.info-card-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-faint);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 4px 0 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.info-card-tab:hover {
+  color: var(--text);
+}
+
+.info-card-tab.active {
+  color: var(--text);
+  border-bottom-color: var(--text);
+}
+
+.info-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.info-details-pane, .info-pseudo-pane {
+  width: 100%;
+}
+
+.info-pseudo-pane .pseudocode-wrap {
+  overflow-y: auto;
+  max-height: 180px;
+}
+
+.info-pseudo-pane .pseudocode-content {
+  font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #24292e;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
 
 .info-row {
   display: grid;
@@ -410,8 +469,8 @@ html, body {
 }
 
 .mini-board .mini-cell.blank {
-  background: transparent;
-  border: 1px dashed var(--line-2);
+  background: rgba(120, 120, 120, 0.25);
+  border: 1px solid rgba(120, 120, 120, 0.4);
 }
 
 .mini-board.goal-tile .mini-cell {
@@ -569,8 +628,8 @@ html, body {
 }
 
 .solution-step .step-cell.blank {
-  background: transparent;
-  border: 1px dashed var(--line-2);
+  background: rgba(120, 120, 120, 0.25);
+  border: 1px solid rgba(120, 120, 120, 0.4);
   color: transparent;
 }
 
@@ -633,7 +692,7 @@ html, body {
 }
 
 /* ============================================================
-   SET NOTATION  { state , parent_label , action , depth } = label
+   SET NOTATION  { state , parent_label , action , cost } = label
 ============================================================ */
 .set-notation {
   display: inline-flex;
@@ -682,7 +741,7 @@ html, body {
   font-size: 17px;
 }
 
-.set-notation .depth-num {
+.set-notation .cost-num {
   color: var(--warn);
   font-weight: 700;
 }
@@ -735,7 +794,7 @@ html, body {
 .set-notation.is-popped .child-label,
 .set-notation.is-popped .parent-label,
 .set-notation.is-popped .action-letter,
-.set-notation.is-popped .depth-num,
+.set-notation.is-popped .cost-num,
 .set-notation.is-popped .brace,
 .set-notation.is-popped .sep,
 .set-notation.is-popped .eq {
@@ -817,3 +876,67 @@ html, body {
 /* ============================================================
    FRONTIER LIVE PANEL — đã loại bỏ ( user yêu cầu )
 ============================================================ */
+
+/* Highlight ô vừa được di chuyển */
+.mini-cell.moved-tile {
+  box-shadow: inset 0 0 0 1.5px #2b8a3e !important;
+  background-color: #ebfbee !important;
+}
+
+.step-cell.moved-tile {
+  box-shadow: inset 0 0 0 2px #2b8a3e !important;
+  background-color: #ebfbee !important;
+}
+
+/* Trace tabs for Trace Table / Pseudocode */
+.trace-tabs {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.trace-tab {
+  background: var(--bg-1);
+  border: none;
+  border-right: 1px solid var(--line);
+  color: var(--text-dim);
+  padding: 6px 14px;
+  font: inherit;
+  font-size: 14px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.trace-tab:last-child {
+  border-right: none;
+}
+
+.trace-tab:hover {
+  color: var(--text);
+  background: var(--bg-2);
+}
+
+.trace-tab.active {
+  background: var(--text);
+  color: var(--bg);
+  font-weight: 600;
+}
+
+#pane-pseudo {
+  padding: 20px;
+  background: #fafafa;
+  border-top: 1px solid var(--line);
+  max-height: 620px;
+  overflow-y: auto;
+}
+
+.pseudocode-content {
+  font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #24292e;
+  margin: 0;
+  white-space: pre-wrap;
+}

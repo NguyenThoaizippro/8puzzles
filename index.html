@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>8 Puzzle - Trình bày thuật toán</title>
+<title>8 Puzzle - Search Algorithm Visualizer</title>
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 <div class="app">
   <header class="topbar">
     <h1>8 PUZZLE</h1>
-    <p class="subtitle">Trình bày thuật toán tìm kiếm</p>
+    <p class="subtitle">Search Algorithm Visualizer</p>
   </header>
 
   <nav class="tabs" id="tabs">
@@ -21,8 +21,11 @@
     <button class="tab" data-algo="greedy">Greedy</button>
     <button class="tab" data-algo="astar">A*</button>
     <button class="tab" data-algo="idastar">IDA*</button>
-    <button class="tab" data-algo="simpleHillClimbing">Leo núi đơn giản</button>
-    <button class="tab" data-algo="steepestAscentHillClimbing">Leo dốc nhất</button>
+    <button class="tab" data-algo="simpleHillClimbing">Simple Hill Climbing</button>
+    <button class="tab" data-algo="steepestAscentHillClimbing">Steepest Ascent HC</button>
+    <button class="tab" data-algo="localbeam">Local Beam Search</button>
+    <button class="tab" data-algo="ramdomreset">Random Restart HC</button>
+    <button class="tab" data-algo="stochastic">Stochastic HC</button>
   </nav>
 
   <section class="config-panel">
@@ -30,8 +33,8 @@
       <div class="board-head">
         <span class="board-title">START</span>
         <div class="board-actions">
-          <button class="btn btn-ghost" id="edit-start">Sửa</button>
-          <button class="btn btn-ghost" id="reset-start">Mặc định</button>
+          <button class="btn btn-ghost" id="edit-start">Edit</button>
+          <button class="btn btn-ghost" id="reset-start">Default</button>
         </div>
       </div>
       <div class="board" id="board-start"></div>
@@ -41,82 +44,103 @@
       <div class="board-head">
         <span class="board-title">GOAL</span>
         <div class="board-actions">
-          <button class="btn btn-ghost" id="edit-goal">Sửa</button>
-          <button class="btn btn-ghost" id="reset-goal">Mặc định</button>
+          <button class="btn btn-ghost" id="edit-goal">Edit</button>
+          <button class="btn btn-ghost" id="reset-goal">Default</button>
         </div>
       </div>
       <div class="board" id="board-goal"></div>
     </div>
 
-    <div class="info-block">
-      <div class="info-row">
-        <span class="label">Thuật toán</span>
-        <span class="value" id="info-algo">BFS</span>
+    <div class="info-block" id="algo-info-card">
+      <div class="info-card-tabs">
+        <button class="info-card-tab active" id="tab-info-details">Details</button>
+        <button class="info-card-tab" id="tab-info-pseudo">Pseudocode</button>
       </div>
-      <div class="info-row">
-        <span class="label">Quy ước action</span>
-        <span class="value">L / R / U / D ( ô trống di chuyển )</span>
-      </div>
-      <div class="info-row">
-        <span class="label">Thứ tự mở rộng</span>
-        <span class="value">L → R → U → D</span>
-      </div>
-      <div class="info-row" id="info-formula-row">
-        <span class="label">Hàm đánh giá</span>
-        <span class="value" id="info-formula">—</span>
+      
+      <div class="info-card-body">
+        <div class="info-details-pane" id="pane-info-details">
+          <div class="info-row">
+            <span class="label">Algorithm</span>
+            <span class="value" id="info-algo">BFS</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Action Convention</span>
+            <span class="value">L / R / U / D (blank moves)</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Expansion Order</span>
+            <span class="value">L → R → U → D</span>
+          </div>
+          <div class="info-row" id="info-formula-row">
+            <span class="label">Evaluation Function</span>
+            <span class="value" id="info-formula">—</span>
+          </div>
+          <div class="info-row" id="info-param-row" style="display: none;">
+            <span class="label" id="info-param-label">Parameter</span>
+            <span class="value" id="info-param-value">—</span>
+          </div>
+        </div>
+
+        <div class="info-pseudo-pane" id="pane-info-pseudo" style="display: none;">
+          <div class="pseudocode-wrap">
+            <pre class="pseudocode-content" id="pseudocode-display"></pre>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
   <section class="controls">
-    <button class="btn btn-primary" id="btn-run">Chạy thuật toán</button>
-    <button class="btn" id="btn-step">Bước kế</button>
-    <button class="btn" id="btn-auto">Tự động</button>
-    <button class="btn" id="btn-pause" disabled>Tạm dừng</button>
-    <button class="btn btn-ghost" id="btn-reset">Đặt lại</button>
+    <button class="btn btn-primary" id="btn-step">Next Step</button>
+    <button class="btn" id="btn-auto">Auto Run</button>
+    <button class="btn" id="btn-pause" disabled>Pause</button>
+    <button class="btn btn-ghost" id="btn-reset">Reset</button>
     <label class="speed">
-      Tốc độ
+      Speed
       <input type="range" id="speed" min="200" max="2000" step="100" value="900" />
       <span id="speed-val">900ms</span>
     </label>
   </section>
 
   <section class="status">
-    <div class="status-cell"><span>Bước</span><b id="stat-step">0</b></div>
+    <div class="status-cell"><span>Iteration</span><b id="stat-step">0</b></div>
     <div class="status-cell"><span>Frontier</span><b id="stat-frontier">0</b></div>
     <div class="status-cell"><span>Reached</span><b id="stat-reached">0</b></div>
-    <div class="status-cell"><span>Trạng thái</span><b id="stat-status">—</b></div>
+    <div class="status-cell"><span>Status</span><b id="stat-status">—</b></div>
   </section>
 
   <section class="trace-section">
     <div class="trace-head">
-      <h2>Bảng truy vết</h2>
-      <span class="hint">Mỗi dòng = 1 vòng while ( pop 1 node và in cả 4 action )</span>
+      <h2>Search Trace Table</h2>
+      <span class="hint" id="trace-hint">Each row = 1 loop iteration (pop 1 node & expand all 4 actions)</span>
     </div>
-    <div class="table-wrap">
-      <table class="trace-table" id="trace-table">
-        <thead>
-          <tr>
-            <th class="col-step">#</th>
-            <th class="col-node">Node ( đang xét )</th>
-            <th class="col-frontier">Frontier  ( node vừa pop &mdash; tô đỏ )</th>
-            <th class="col-reached">Reached</th>
-          </tr>
-        </thead>
-        <tbody id="trace-body"></tbody>
-      </table>
+    
+    <div class="trace-pane" id="pane-trace">
+      <div class="table-wrap">
+        <table class="trace-table" id="trace-table">
+          <thead>
+            <tr>
+              <th class="col-step">Step</th>
+              <th class="col-node">Node (expanding)</th>
+              <th class="col-frontier">Frontier Expansion</th>
+              <th class="col-reached">Reached Set</th>
+            </tr>
+          </thead>
+          <tbody id="trace-body"></tbody>
+        </table>
+      </div>
     </div>
   </section>
 
   <section class="solution-section" id="solution-section" hidden>
-    <h2>Đường đi tới đích</h2>
+    <h2>Solution Path</h2>
     <div class="solution-meta">
       <span id="sol-len">—</span>
       <span id="sol-actions">—</span>
     </div>
     <div class="solution-strip" id="solution-strip"></div>
     <div class="playback">
-      <button class="btn" id="btn-play-path">Phát lại đường đi</button>
+      <button class="btn" id="btn-play-path">Playback Path</button>
       <span class="playback-info" id="playback-info"></span>
     </div>
   </section>
