@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>8 Puzzle - Search Algorithm Visualizer</title>
-<link rel="stylesheet" href="style.css" />
+<link rel="stylesheet" href="style.css?v=2" />
 </head>
 <body>
 <div class="app">
@@ -13,137 +13,171 @@
     <p class="subtitle">Search Algorithm Visualizer</p>
   </header>
 
-  <nav class="tabs" id="tabs">
-    <button class="tab active" data-algo="bfs">BFS</button>
-    <button class="tab" data-algo="dfs">DFS</button>
-    <button class="tab" data-algo="ids">IDS</button>
-    <button class="tab" data-algo="ucs">UCS</button>
-    <button class="tab" data-algo="greedy">Greedy</button>
-    <button class="tab" data-algo="astar">A*</button>
-    <button class="tab" data-algo="idastar">IDA*</button>
-    <button class="tab" data-algo="simpleHillClimbing">Simple Hill Climbing</button>
-    <button class="tab" data-algo="steepestAscentHillClimbing">Steepest Ascent HC</button>
-    <button class="tab" data-algo="localbeam">Local Beam Search</button>
-    <button class="tab" data-algo="ramdomreset">Random Restart HC</button>
-    <button class="tab" data-algo="stochastic">Stochastic HC</button>
-  </nav>
-
-  <section class="config-panel">
-    <div class="board-block">
-      <div class="board-head">
-        <span class="board-title">START</span>
-        <div class="board-actions">
-          <button class="btn btn-ghost" id="edit-start">Edit</button>
-          <button class="btn btn-ghost" id="reset-start">Default</button>
-        </div>
-      </div>
-      <div class="board" id="board-start"></div>
+  <div class="chrome-tab-container">
+    <div class="chrome-tabs">
+      <button class="chrome-tab active" data-group="group1">Nhóm 1: Uninformed</button>
+      <button class="chrome-tab" data-group="group2">Nhóm 2: Heuristic</button>
+      <button class="chrome-tab" data-group="group3">Nhóm 3: Local Search</button>
+      <button class="chrome-tab" data-group="group4">Nhóm 4: Belief-State</button>
     </div>
-
-    <div class="board-block">
-      <div class="board-head">
-        <span class="board-title">GOAL</span>
-        <div class="board-actions">
-          <button class="btn btn-ghost" id="edit-goal">Edit</button>
-          <button class="btn btn-ghost" id="reset-goal">Default</button>
-        </div>
+    <div class="chrome-tab-content">
+      <div class="algo-subtabs" id="group1-subtabs">
+        <button class="tab active" data-algo="bfs">BFS</button>
+        <button class="tab" data-algo="dfs">DFS</button>
+        <button class="tab" data-algo="ids">IDS</button>
       </div>
-      <div class="board" id="board-goal"></div>
+      <div class="algo-subtabs" id="group2-subtabs" style="display: none;">
+        <button class="tab" data-algo="ucs">UCS</button>
+        <button class="tab" data-algo="greedy">Greedy</button>
+        <button class="tab" data-algo="astar">A*</button>
+        <button class="tab" data-algo="idastar">IDA*</button>
+      </div>
+      <div class="algo-subtabs" id="group3-subtabs" style="display: none;">
+        <button class="tab" data-algo="simpleHillClimbing">Simple Hill Climbing</button>
+        <button class="tab" data-algo="steepestAscentHillClimbing">Steepest Ascent HC</button>
+        <button class="tab" data-algo="localbeam">Local Beam Search</button>
+        <button class="tab" data-algo="ramdomreset">Random Restart HC</button>
+        <button class="tab" data-algo="stochastic">Stochastic HC</button>
+        <button class="tab" data-algo="simulatedAnnealing">Simulated Annealing</button>
+      </div>
+      <div class="algo-subtabs" id="group4-subtabs" style="display: none;">
+        <button class="tab" data-algo="sensorless">Sensorless Search</button>
+      </div>
     </div>
+  </div>
 
-    <div class="info-block" id="algo-info-card">
-      <div class="info-card-tabs">
-        <button class="info-card-tab active" id="tab-info-details">Details</button>
-        <button class="info-card-tab" id="tab-info-pseudo">Pseudocode</button>
-      </div>
-      
-      <div class="info-card-body">
-        <div class="info-details-pane" id="pane-info-details">
-          <div class="info-row">
-            <span class="label">Algorithm</span>
-            <span class="value" id="info-algo">BFS</span>
-          </div>
-          <div class="info-row">
-            <span class="label">Action Convention</span>
-            <span class="value">L / R / U / D (blank moves)</span>
-          </div>
-          <div class="info-row">
-            <span class="label">Expansion Order</span>
-            <span class="value">L → R → U → D</span>
-          </div>
-          <div class="info-row" id="info-formula-row">
-            <span class="label">Evaluation Function</span>
-            <span class="value" id="info-formula">—</span>
-          </div>
-          <div class="info-row" id="info-param-row" style="display: none;">
-            <span class="label" id="info-param-label">Parameter</span>
-            <span class="value" id="info-param-value">—</span>
-          </div>
-        </div>
+  <div class="main-layout">
+    <div class="left-panel" id="left-panel">
 
-        <div class="info-pseudo-pane" id="pane-info-pseudo" style="display: none;">
-          <div class="pseudocode-wrap">
-            <pre class="pseudocode-content" id="pseudocode-display"></pre>
+      <section class="controls">
+        <button class="btn btn-primary" id="btn-step">Next Step</button>
+        <button class="btn" id="btn-auto">Auto Run</button>
+        <button class="btn" id="btn-pause" disabled>Pause</button>
+        <button class="btn btn-ghost" id="btn-reset">Reset</button>
+        <label class="speed">
+          Speed
+          <input type="range" id="speed" min="200" max="2000" step="100" value="900" />
+          <span id="speed-val">900ms</span>
+        </label>
+      </section>
+
+      <section class="status">
+        <div class="status-cell"><span>Iteration</span><b id="stat-step">0</b></div>
+        <div class="status-cell"><span>Frontier</span><b id="stat-frontier">0</b></div>
+        <div class="status-cell"><span>Reached</span><b id="stat-reached">0</b></div>
+      </section>
+
+      <section class="config-panel">
+        <div class="board-block">
+          <div class="board-head">
+            <span class="board-title" id="start-title">START</span>
+            <div class="board-actions">
+              <button class="btn btn-ghost" id="random-start">Random</button>
+              <button class="btn btn-ghost" id="edit-start">Edit</button>
+              <button class="btn btn-ghost" id="reset-start">Default</button>
+            </div>
+          </div>
+          <div style="display: flex; gap: 6px;" id="start-boards-wrapper">
+            <div class="board" id="board-start"></div>
+            <div class="board" id="board-start-2" style="display: none;"></div>
           </div>
         </div>
-      </div>
-    </div>
-  </section>
 
-  <section class="controls">
-    <button class="btn btn-primary" id="btn-step">Next Step</button>
-    <button class="btn" id="btn-auto">Auto Run</button>
-    <button class="btn" id="btn-pause" disabled>Pause</button>
-    <button class="btn btn-ghost" id="btn-reset">Reset</button>
-    <label class="speed">
-      Speed
-      <input type="range" id="speed" min="200" max="2000" step="100" value="900" />
-      <span id="speed-val">900ms</span>
-    </label>
-  </section>
+        <div class="board-block">
+          <div class="board-head">
+            <span class="board-title" id="goal-title">GOAL</span>
+            <div class="board-actions">
+              <button class="btn btn-ghost" id="add-goal-btn" style="display: none;">+ Goal</button>
+              <button class="btn btn-ghost" id="edit-goal">Edit</button>
+              <button class="btn btn-ghost" id="reset-goal">Default</button>
+            </div>
+          </div>
+          <div class="boards-container" id="goals-container">
+            <div class="board" id="board-goal-0"></div>
+          </div>
+        </div>
 
-  <section class="status">
-    <div class="status-cell"><span>Iteration</span><b id="stat-step">0</b></div>
-    <div class="status-cell"><span>Frontier</span><b id="stat-frontier">0</b></div>
-    <div class="status-cell"><span>Reached</span><b id="stat-reached">0</b></div>
-    <div class="status-cell"><span>Status</span><b id="stat-status">—</b></div>
-  </section>
+        <div class="info-block" id="algo-info-card">
+          <div class="info-card-tabs">
+            <button class="info-card-tab active" id="tab-info-details">Details</button>
+            <button class="info-card-tab" id="tab-info-pseudo">Pseudocode</button>
+          </div>
+          
+          <div class="info-card-body">
+            <div class="info-details-pane" id="pane-info-details">
+              <div class="info-row">
+                <span class="label">Algorithm</span>
+                <span class="value" id="info-algo">BFS</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Action Convention</span>
+                <span class="value">L / R / U / D (blank moves)</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Expansion Order</span>
+                <span class="value">L → R → U → D</span>
+              </div>
+              <div class="info-row" id="info-formula-row">
+                <span class="label">Evaluation Function</span>
+                <span class="value" id="info-formula">—</span>
+              </div>
+              <div class="info-row" id="info-param-row" style="display: none;">
+                <span class="label" id="info-param-label">Parameter</span>
+                <span class="value" id="info-param-value">—</span>
+              </div>
+            </div>
 
-  <section class="trace-section">
-    <div class="trace-head">
-      <h2>Search Trace Table</h2>
-      <span class="hint" id="trace-hint">Each row = 1 loop iteration (pop 1 node & expand all 4 actions)</span>
+            <div class="info-pseudo-pane" id="pane-info-pseudo" style="display: none;">
+              <div class="pseudocode-wrap">
+                <pre class="pseudocode-content" id="pseudocode-display"></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
-    
-    <div class="trace-pane" id="pane-trace">
-      <div class="table-wrap">
-        <table class="trace-table" id="trace-table">
-          <thead>
-            <tr>
-              <th class="col-step">Step</th>
-              <th class="col-node">Node (expanding)</th>
-              <th class="col-frontier">Frontier Expansion</th>
-              <th class="col-reached">Reached Set</th>
-            </tr>
-          </thead>
-          <tbody id="trace-body"></tbody>
-        </table>
-      </div>
-    </div>
-  </section>
 
-  <section class="solution-section" id="solution-section" hidden>
-    <h2>Solution Path</h2>
-    <div class="solution-meta">
-      <span id="sol-len">—</span>
-      <span id="sol-actions">—</span>
+    <div class="resize-handle" id="resize-handle">
+      <div class="resize-handle-bar"></div>
     </div>
-    <div class="solution-strip" id="solution-strip"></div>
-    <div class="playback">
-      <button class="btn" id="btn-play-path">Playback Path</button>
-      <span class="playback-info" id="playback-info"></span>
+    <div class="right-panel" id="right-panel">
+      <section class="trace-section">
+        <div class="trace-head">
+          <h2>Search Trace Table</h2>
+          <span class="hint" id="trace-hint">Each row = 1 loop iteration (pop 1 node & expand all 4 actions)</span>
+        </div>
+        
+        <div class="trace-pane" id="pane-trace">
+          <div class="table-wrap">
+            <table class="trace-table" id="trace-table">
+              <thead>
+                <tr>
+                  <th class="col-step">Step</th>
+                  <th class="col-node">Node (expanding)</th>
+                  <th class="col-frontier">Frontier Expansion</th>
+                  <th class="col-reached">Reached Set</th>
+                </tr>
+              </thead>
+              <tbody id="trace-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="solution-section" id="solution-section" hidden>
+        <h2>Solution Path</h2>
+        <div class="solution-meta">
+          <span id="sol-len">—</span>
+          <span id="sol-actions">—</span>
+        </div>
+        <div class="solution-strip" id="solution-strip"></div>
+        <div class="playback">
+          <button class="btn" id="btn-play-path">Playback Path</button>
+          <span class="playback-info" id="playback-info"></span>
+        </div>
+      </section>
     </div>
-  </section>
+  </div>
 </div>
 
 <script src="core.js"></script>

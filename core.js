@@ -28,6 +28,10 @@ function stateKey(state) {
 }
 
 function statesEqual(a, b) {
+  if (Array.isArray(b) && Array.isArray(b[0])) {
+    return b.some(g => statesEqual(a, g));
+  }
+  if (!a || !b) return false;
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
   return true;
@@ -90,6 +94,13 @@ function isSolvable(state, goal) {
 // Default presets for each search algorithm
 const GOAL_DEFAULT = [1, 2, 3, 4, 5, 6, 7, 8, 0];
 
+const SENSORLESS_DEFAULT_GOALS = [
+  [1, 2, 3, 4, 5, 6, 7, 8, 0],
+  [1, 2, 3, 4, 0, 5, 6, 7, 8],
+  [0, 1, 2, 3, 4, 5, 6, 7, 8],
+  [1, 2, 3, 4, 5, 6, 7, 0, 8]
+];
+
 const PRESETS = {
   bfs: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
   dfs: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
@@ -103,6 +114,12 @@ const PRESETS = {
   localbeam: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
   ramdomreset: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
   stochastic: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
+  simulatedAnnealing: { start: [1, 2, 3, 4, 0, 6, 7, 5, 8], goal: [1, 2, 3, 4, 5, 6, 7, 8, 0] },
+  sensorless: {
+    start: [1, 2, 3, 4, 0, 6, 7, 5, 8],
+    start2: [1, 2, 3, 4, 0, 5, 7, 8, 6],
+    goal: [1, 2, 3, 4, 5, 6, 7, 8, 0]
+  },
 };
 
 const ALGO_META = {
@@ -118,6 +135,8 @@ const ALGO_META = {
   localbeam: { name: 'Local Beam Search', formula: 'h(n) = Σ Manhattan distance (maintains k best states, filters duplicates)' },
   ramdomreset: { name: 'Random Restart Hill Climbing', formula: 'h(n) = Σ Manhattan distance (restarts up to k times when stuck)' },
   stochastic: { name: 'Stochastic Hill Climbing', formula: 'h(n) = Σ Manhattan distance (randomly chooses better neighbor)' },
+  simulatedAnnealing: { name: 'Simulated Annealing', formula: 'h(n) = Σ Manhattan distance (probabilistic state acceptance)' },
+  sensorless: { name: 'Sensorless Search', formula: 'Belief-State Search: BFS, DFS, A*, or Greedy over Belief States space' },
 };
 
 function getStepCost(stateArr, goalArr, parentStateArr, gType) {
@@ -139,6 +158,18 @@ function getStepCost(stateArr, goalArr, parentStateArr, gType) {
 }
 
 function getHValue(stateArr, goalArr, parentStateArr, hType) {
+  if (Array.isArray(goalArr) && Array.isArray(goalArr[0])) {
+    let minH = Infinity;
+    for (const g of goalArr) {
+      const h = getSingleHValue(stateArr, g, parentStateArr, hType);
+      if (h < minH) minH = h;
+    }
+    return minH;
+  }
+  return getSingleHValue(stateArr, goalArr, parentStateArr, hType);
+}
+
+function getSingleHValue(stateArr, goalArr, parentStateArr, hType) {
   if (hType === 'manhattan') {
     return manhattanDistance(stateArr, goalArr);
   }

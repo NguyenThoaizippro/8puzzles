@@ -1405,5 +1405,325 @@ function* stochastic(start, goal, gType = 'steps', hType = 'manhattan') {
   }
 }
 
-const ALGORITHMS = { bfs, dfs, ids, ucs, greedy, astar, idastar, simpleHillClimbing, steepestAscentHillClimbing, localbeam, ramdomreset, stochastic };
+// Simulated Annealing
+function* simulatedAnnealing(start, goal, gType = 'steps', hType = 'manhattan', t0 = 100, tMin = 0.1, alpha = 0.9) {
+  let nextId = 0;
+  const startH = getHValue(start, goal, null, hType);
+  let currentNode = makeNode(start, null, null, 0, 0, startH, nextId++);
+  
+  if (statesEqual(start, goal)) {
+    yield {
+      iter: 0, popped: snapshotPopped(currentNode), poppedIndex: 0,
+      children: [], frontierBefore: [snapshotPopped(currentNode)],
+      frontierAfter: [], reachedAfter: [stateKey(start)],
+      done: true, success: true, goalNode: currentNode,
+    };
+    return;
+  }
+
+  let T = t0;
+  let iter = 0;
+  const reached = new Set([stateKey(start)]);
+
+  while (T > tMin) {
+    iter++;
+    const frontierBefore = [snapshotPopped(currentNode)];
+    const children = [];
+    let nextNode = null;
+
+    if (statesEqual(currentNode.state, goal)) {
+      yield {
+        iter, popped: snapshotPopped(currentNode), poppedIndex: 0,
+        children: [], frontierBefore,
+        frontierAfter: [], reachedAfter: snapshotReached(reached),
+        done: true, success: true, goalNode: currentNode,
+      };
+      return;
+    }
+
+    // next state = RandomNeighbor(current state)
+    const neighbors = [];
+    for (const action of ACTION_ORDER) {
+      const ns = applyAction(currentNode.state, action);
+      if (ns === null) {
+        children.push({
+          action, state: null, status: 'invalid',
+          reason: 'không thể di chuyển', parentId: currentNode.id
+        });
+        continue;
+      }
+      
+      const childH = getHValue(ns, goal, currentNode.state, hType);
+      neighbors.push({ state: ns, action, h: childH });
+    }
+
+    if (neighbors.length === 0) {
+      yield {
+        iter, popped: snapshotPopped(currentNode), poppedIndex: 0,
+        children, frontierBefore,
+        frontierAfter: [], reachedAfter: snapshotReached(reached),
+        done: true, success: false, goalNode: null,
+        expansionMessage: `Dừng: Không có lân cận nào hợp lệ`,
+      };
+      return;
+    }
+
+    // Pick one at random
+    const chosen = neighbors[Math.floor(Math.random() * neighbors.length)];
+    const nextState = chosen.state;
+    const nextH = chosen.h;
+    const action = chosen.action;
+    const childNode = makeNode(nextState, currentNode, action, currentNode.depth + 1, 0, nextH, nextId++);
+
+    // Δ = h(next state) - h(current state)
+    const delta = nextH - currentNode.h;
+
+    let accepted = false;
+    let prob = 1.0;
+    let randVal = 0.0;
+
+    if (delta < 0) {
+      accepted = true;
+      children.push({
+        action, state: nextState, status: 'added',
+        reason: `chấp nhận (Δ = ${delta} < 0, h_new = ${nextH} < h_curr = ${currentNode.h})`,
+        node: childNode, depth: childNode.depth, id: childNode.id, parentId: currentNode.id, h: nextH
+      });
+    } else {
+      prob = Math.exp(-delta / T);
+      randVal = Math.random();
+      if (randVal < prob) {
+        accepted = true;
+        children.push({
+          action, state: nextState, status: 'added',
+          reason: `chấp nhận (Δ = ${delta} ≥ 0, p = ${prob.toFixed(4)} > r = ${randVal.toFixed(4)}, T = ${T.toFixed(2)})`,
+          node: childNode, depth: childNode.depth, id: childNode.id, parentId: currentNode.id, h: nextH
+        });
+      } else {
+        children.push({
+          action, state: nextState, status: 'skipped',
+          reason: `bỏ qua (Δ = ${delta} ≥ 0, p = ${prob.toFixed(4)} ≤ r = ${randVal.toFixed(4)}, T = ${T.toFixed(2)})`,
+          depth: currentNode.depth + 1, parentId: currentNode.id, h: nextH
+        });
+      }
+    }
+
+    // Add skipped status for other neighbors
+    for (const neighbor of neighbors) {
+      if (neighbor.action !== action) {
+        children.push({
+          action: neighbor.action, state: neighbor.state, status: 'skipped',
+          reason: 'không được chọn ngẫu nhiên',
+          depth: currentNode.depth + 1, parentId: currentNode.id, h: neighbor.h
+        });
+      }
+    }
+
+    let nextNodeToYield = currentNode;
+    if (accepted) {
+      nextNode = childNode;
+      reached.add(stateKey(nextState));
+      nextNodeToYield = nextNode;
+    }
+
+    const prevT = T;
+    T = alpha * T;
+
+    yield {
+      iter, popped: snapshotPopped(currentNode), poppedIndex: 0,
+      children, frontierBefore,
+      frontierAfter: accepted ? [snapshotPopped(nextNode)] : [],
+      reachedAfter: snapshotReached(reached),
+      done: statesEqual(nextNodeToYield.state, goal) || T <= tMin,
+      success: statesEqual(nextNodeToYield.state, goal),
+      goalNode: statesEqual(nextNodeToYield.state, goal) ? nextNodeToYield : null,
+      expansionMessage: `T = ${prevT.toFixed(2)} → ${T.toFixed(2)} (Limit = ${tMin})`,
+    };
+
+    if (accepted) {
+      currentNode = nextNode;
+      if (statesEqual(currentNode.state, goal)) {
+        return;
+      }
+    }
+  }
+
+  yield {
+    iter: iter + 1, popped: null, poppedIndex: -1,
+    children: [], frontierBefore: [], frontierAfter: [],
+    reachedAfter: snapshotReached(reached),
+    done: true, success: false, goalNode: null,
+    expansionMessage: `Dừng: Nhiệt độ giảm xuống T = ${T.toFixed(4)} ≤ Tmin = ${tMin}`,
+  };
+}
+
+function beliefStateKey(beliefState) {
+  return beliefState.map(s => s.join('')).sort().join('|');
+}
+
+function isGoalBeliefState(beliefState, goal) {
+  if (beliefState.length === 0) return false;
+  return beliefState.every(s => statesEqual(s, goal));
+}
+
+function transitionBeliefState(beliefState, action, goal) {
+  const nextStates = [];
+  const seenKeys = new Set();
+  for (const s of beliefState) {
+    let resolvedS;
+    if (statesEqual(s, goal)) {
+      resolvedS = s.slice();
+    } else {
+      const nextS = applyAction(s, action);
+      resolvedS = nextS !== null ? nextS : s.slice();
+    }
+    const k = stateKey(resolvedS);
+    if (!seenKeys.has(k)) {
+      seenKeys.add(k);
+      nextStates.push(resolvedS);
+    }
+  }
+  return nextStates;
+}
+
+function getBeliefStateH(beliefState, goal, hType) {
+  let total = 0;
+  for (const s of beliefState) {
+    total += getHValue(s, goal, null, hType);
+  }
+  return total / beliefState.length;
+}
+
+function makeBeliefNode(beliefState, parent, action, g, h, id) {
+  return {
+    state: beliefState,
+    parent,
+    action,
+    depth: g,
+    g,
+    h,
+    id,
+    parentId: parent ? parent.id : null
+  };
+}
+
+function* sensorless(start1, start2, goal, strategy = 'bfs', hType = 'manhattan') {
+  let nextId = 0;
+  
+  const startBelief = [];
+  const startKeys = new Set();
+  [start1, start2].forEach(s => {
+    const k = stateKey(s);
+    if (!startKeys.has(k)) {
+      startKeys.add(k);
+      startBelief.push(s);
+    }
+  });
+
+  const startH = getBeliefStateH(startBelief, goal, hType);
+  const startNode = makeBeliefNode(startBelief, null, null, 0, startH, nextId++);
+
+  if (isGoalBeliefState(startBelief, goal)) {
+    yield {
+      iter: 0, popped: snapshotPopped(startNode), poppedIndex: 0,
+      children: [], frontierBefore: [snapshotPopped(startNode)],
+      frontierAfter: [], reachedAfter: [beliefStateKey(startBelief)],
+      done: true, success: true, goalNode: startNode,
+    };
+    return;
+  }
+
+  const frontier = [startNode];
+  const reached = new Set([beliefStateKey(startBelief)]);
+  let iter = 0;
+
+  while (frontier.length > 0) {
+    iter++;
+    const frontierBefore = frontier.map(n => snapshotPopped(n));
+
+    let poppedIndex = 0;
+    if (strategy === 'dfs') {
+      poppedIndex = frontier.length - 1;
+    } else if (strategy === 'astar' || strategy === 'greedy') {
+      let bestIdx = 0;
+      for (let i = 1; i < frontier.length; i++) {
+        const nBest = frontier[bestIdx];
+        const nCurr = frontier[i];
+        const valBest = strategy === 'astar' ? (nBest.g + nBest.h) : nBest.h;
+        const valCurr = strategy === 'astar' ? (nCurr.g + nCurr.h) : nCurr.h;
+        if (valCurr < valBest || (valCurr === valBest && nCurr.id < nBest.id)) {
+          bestIdx = i;
+        }
+      }
+      poppedIndex = bestIdx;
+    }
+
+    const currentNode = frontier.splice(poppedIndex, 1)[0];
+
+    if (isGoalBeliefState(currentNode.state, goal)) {
+      yield {
+        iter, popped: snapshotPopped(currentNode), poppedIndex,
+        children: [], frontierBefore,
+        frontierAfter: frontier.map(n => snapshotPopped(n)),
+        reachedAfter: Array.from(reached),
+        done: true, success: true, goalNode: currentNode,
+      };
+      return;
+    }
+
+    const children = [];
+
+    for (const action of ACTION_ORDER) {
+      const nextBelief = transitionBeliefState(currentNode.state, action, goal);
+      const childKey = beliefStateKey(nextBelief);
+      const parentKey = beliefStateKey(currentNode.state);
+
+      if (childKey === parentKey) {
+        children.push({
+          action, state: null, status: 'invalid',
+          reason: 'không thay đổi trạng thái nào', parentId: currentNode.id
+        });
+        continue;
+      }
+
+      const childH = getBeliefStateH(nextBelief, goal, hType);
+      const childNode = makeBeliefNode(nextBelief, currentNode, action, currentNode.g + 1, childH, nextId++);
+
+      if (reached.has(childKey)) {
+        children.push({
+          action, state: nextBelief, status: 'skipped',
+          reason: 'đã đi qua belief state này',
+          node: childNode, depth: childNode.depth, id: childNode.id, parentId: currentNode.id, h: childH
+        });
+        continue;
+      }
+
+      reached.add(childKey);
+      children.push({
+        action, state: nextBelief, status: 'added',
+        reason: 'thêm belief state mới',
+        node: childNode, depth: childNode.depth, id: childNode.id, parentId: currentNode.id, h: childH
+      });
+
+      frontier.push(childNode);
+    }
+
+    yield {
+      iter, popped: snapshotPopped(currentNode), poppedIndex,
+      children, frontierBefore,
+      frontierAfter: frontier.map(n => snapshotPopped(n)),
+      reachedAfter: Array.from(reached),
+      done: false, success: false, goalNode: null,
+    };
+  }
+
+  yield {
+    iter: iter + 1, popped: null, poppedIndex: -1,
+    children: [], frontierBefore: [], frontierAfter: [],
+    reachedAfter: Array.from(reached),
+    done: true, success: false, goalNode: null,
+  };
+}
+
+const ALGORITHMS = { bfs, dfs, ids, ucs, greedy, astar, idastar, simpleHillClimbing, steepestAscentHillClimbing, localbeam, ramdomreset, stochastic, simulatedAnnealing, sensorless };
 

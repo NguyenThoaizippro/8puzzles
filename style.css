@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 :root {
   --bg: #ffffff;
   --bg-1: #fafafa;
@@ -25,87 +27,236 @@ html, body {
   padding: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: "Times New Roman", "Liberation Serif", "DejaVu Serif", Times, serif;
-  font-size: 17px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
   line-height: 1.5;
 }
 
 .app {
-  max-width: 1320px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 28px 28px 64px;
+  padding: 28px 4px 64px;
 }
 
 .topbar {
   border-bottom: 1px solid var(--line);
   padding-bottom: 18px;
   margin-bottom: 22px;
+  text-align: center;
 }
 
 .topbar h1 {
   margin: 0;
-  font-size: 32px;
-  letter-spacing: 8px;
-  font-weight: 600;
+  font-size: 28px;
+  letter-spacing: -0.5px;
+  font-weight: 800;
 }
 
 .topbar .subtitle {
   margin: 4px 0 0;
   color: var(--text-dim);
-  font-size: 17px;
-  letter-spacing: 2px;
+  font-size: 14px;
+  letter-spacing: normal;
 }
 
-.tabs {
+/* ── Chrome-style Group Tabs ── */
+.chrome-tab-container {
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.chrome-tabs {
   display: flex;
   gap: 0;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 22px;
-  width: fit-content;
 }
 
+.chrome-tab {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  color: var(--text-faint);
+  padding: 9px 20px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: normal;
+  cursor: pointer;
+  margin-right: 3px;
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+  bottom: -1px;
+}
+
+.chrome-tab:hover {
+  color: var(--text);
+  background: var(--bg-3);
+}
+
+.chrome-tab.active {
+  background: var(--bg);
+  color: var(--text);
+  border-color: var(--line);
+  border-bottom-color: var(--bg);
+  z-index: 1;
+}
+
+.chrome-tab-content {
+  padding: 12px 4px;
+  background: var(--bg);
+}
+
+.algo-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* keep .tab used inside subtabs */
 .tab {
   background: var(--bg-1);
-  border: none;
-  border-right: 1px solid var(--line);
+  border: 1px solid var(--line);
+  border-radius: 4px;
   color: var(--text-dim);
-  padding: 10px 22px;
+  padding: 6px 14px;
   font: inherit;
-  letter-spacing: 4px;
+  font-size: 13px;
+  letter-spacing: normal;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-
-.tab:last-child {
-  border-right: none;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
 .tab:hover {
   color: var(--text);
   background: var(--bg-2);
+  border-color: var(--line-2);
 }
 
 .tab.active {
   background: var(--text);
   color: var(--bg);
+  border-color: var(--text);
   font-weight: 600;
 }
 
-.config-panel {
-  display: grid;
-  grid-template-columns: auto auto 1fr;
-  gap: 22px;
+/* ── Two-column Dashboard Layout ── */
+.main-layout {
+  display: flex;
+  gap: 0;
   align-items: start;
-  margin-bottom: 22px;
+  margin-top: 20px;
+}
+
+.left-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: sticky;
+  top: 20px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  scrollbar-width: none;
+  width: 340px;
+  min-width: 240px;
+  max-width: 600px;
+  flex-shrink: 0;
+  --board-cell: 40px;
+}
+.left-panel:hover {
+  scrollbar-width: thin;
+}
+.left-panel::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.left-panel:hover::-webkit-scrollbar {
+  width: 6px;
+}
+.left-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+.left-panel::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 3px;
+}
+
+/* ── Resize Handle ── */
+.resize-handle {
+  width: 16px;
+  cursor: col-resize;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  margin: 0 4px;
+  position: relative;
+  z-index: 10;
+  user-select: none;
+  align-self: stretch;
+}
+
+.resize-handle-bar {
+  width: 3px;
+  border-radius: 99px;
+  background: var(--line);
+  transition: background 0.15s, width 0.15s, box-shadow 0.15s;
+  align-self: stretch;
+  position: relative;
+}
+
+/* Dotted grip dots in the middle */
+.resize-handle-bar::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 3px;
+  height: 32px;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--line-2) 0px,
+    var(--line-2) 3px,
+    transparent 3px,
+    transparent 7px
+  );
+  border-radius: 2px;
+}
+
+.resize-handle:hover .resize-handle-bar {
+  background: var(--line-2);
+  width: 3px;
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.06);
+}
+
+.resize-handle.dragging .resize-handle-bar {
+  background: #888;
+  width: 3px;
+  box-shadow: 0 0 0 4px rgba(0,0,0,0.1);
+}
+
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  min-height: calc(100vh - 160px);
+}
+
+.config-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .board-block {
   background: var(--bg-1);
   border: 1px solid var(--line);
   border-radius: 6px;
-  padding: 14px;
+  padding: 10px;
 }
 
 .board-head {
@@ -116,9 +267,10 @@ html, body {
 }
 
 .board-title {
-  letter-spacing: 4px;
+  letter-spacing: normal;
   color: var(--text-dim);
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .board-actions {
@@ -128,13 +280,14 @@ html, body {
 
 .board {
   display: grid;
-  grid-template-columns: repeat(3, 56px);
-  grid-template-rows: repeat(3, 56px);
+  grid-template-columns: repeat(3, var(--board-cell, 56px));
+  grid-template-rows: repeat(3, var(--board-cell, 56px));
   gap: 4px;
   background: var(--line);
   padding: 4px;
   border-radius: 4px;
-  width: 184px;
+  width: calc(var(--board-cell, 56px) * 3 + 16px);
+  transition: width 0.08s, grid-template-columns 0.08s;
 }
 
 .cell {
@@ -142,7 +295,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: calc(var(--board-cell, 56px) * 0.4);
   font-weight: 600;
   color: var(--text);
   border-radius: 3px;
@@ -180,7 +333,7 @@ html, body {
   border: 1px solid var(--line);
   text-align: center;
   font: inherit;
-  font-size: 22px;
+  font-size: calc(var(--board-cell, 56px) * 0.4);
   font-weight: 600;
   color: var(--text);
   outline: none;
@@ -211,9 +364,9 @@ html, body {
   border-bottom: 2px solid transparent;
   color: var(--text-faint);
   font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 1px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: normal;
   text-transform: uppercase;
   padding: 4px 0 8px;
   cursor: pointer;
@@ -269,7 +422,8 @@ html, body {
 
 .info-row .label {
   color: var(--text-faint);
-  letter-spacing: 2px;
+  letter-spacing: normal;
+  font-weight: 600;
 }
 
 .info-row .value {
@@ -281,7 +435,7 @@ html, body {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 14px;
+  margin-bottom: 0;
 }
 
 .btn {
@@ -290,7 +444,8 @@ html, body {
   border: 1px solid var(--line);
   padding: 8px 16px;
   font: inherit;
-  letter-spacing: 2px;
+  font-size: 14px;
+  letter-spacing: normal;
   cursor: pointer;
   border-radius: 4px;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
@@ -331,8 +486,8 @@ html, body {
   align-items: center;
   gap: 8px;
   color: var(--text-dim);
-  font-size: 14px;
-  letter-spacing: 2px;
+  font-size: 13px;
+  letter-spacing: normal;
   margin-left: auto;
 }
 
@@ -344,28 +499,29 @@ html, body {
 .status {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 22px;
+  gap: 8px;
+  margin-bottom: 0;
 }
 
 .status-cell {
   background: var(--bg-1);
   border: 1px solid var(--line);
   border-radius: 4px;
-  padding: 10px 14px;
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .status-cell span {
   color: var(--text-faint);
-  font-size: 13px;
-  letter-spacing: 3px;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  font-weight: 600;
 }
 
 .status-cell b {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
 }
 
@@ -377,7 +533,10 @@ html, body {
   background: var(--bg-1);
   border: 1px solid var(--line);
   border-radius: 6px;
-  margin-bottom: 22px;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .trace-head {
@@ -390,8 +549,8 @@ html, body {
 
 .trace-head h2 {
   margin: 0;
-  font-size: 18px;
-  letter-spacing: 4px;
+  font-size: 17px;
+  letter-spacing: normal;
 }
 
 .trace-head .hint {
@@ -401,8 +560,9 @@ html, body {
 
 .table-wrap {
   overflow-x: auto;
-  max-height: 620px;
+  max-height: calc(100vh - 180px);
   overflow-y: auto;
+  flex: 1;
 }
 
 .trace-table {
@@ -423,16 +583,16 @@ html, body {
   top: 0;
   background: var(--bg-2);
   color: var(--text-dim);
-  font-weight: 500;
-  letter-spacing: 3px;
-  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: normal;
+  font-size: 13px;
   z-index: 1;
 }
 
-.col-step { width: 60px; }
+.col-step { width: 5%; min-width: 40px; }
 .col-node { width: 28%; }
 .col-frontier { width: 42%; }
-.col-reached { width: 30%; }
+.col-reached { width: 25%; }
 
 .trace-row.current {
   background: rgba(0, 0, 0, 0.04);
@@ -501,7 +661,8 @@ html, body {
 
 .node-cell .node-label {
   color: var(--text-dim);
-  letter-spacing: 2px;
+  letter-spacing: normal;
+  font-weight: 600;
 }
 
 .node-cell .node-cost {
@@ -549,7 +710,7 @@ html, body {
 
 .child-item .child-status {
   font-size: 13px;
-  letter-spacing: 1px;
+  letter-spacing: normal;
 }
 
 .child-item.added .child-status { color: var(--good); }
@@ -576,8 +737,8 @@ html, body {
 
 .solution-section h2 {
   margin: 0 0 8px;
-  font-size: 18px;
-  letter-spacing: 4px;
+  font-size: 17px;
+  letter-spacing: normal;
 }
 
 .solution-meta {
@@ -639,8 +800,8 @@ html, body {
 }
 
 .solution-step .step-action {
-  font-size: 14px;
-  letter-spacing: 3px;
+  font-size: 13px;
+  letter-spacing: normal;
   color: var(--text-dim);
 }
 
@@ -679,15 +840,29 @@ html, body {
   background: #909090;
 }
 
+@media (max-width: 1100px) {
+  .main-layout {
+    flex-direction: column;
+  }
+  .left-panel {
+    position: static;
+    max-height: none;
+    overflow-y: visible;
+    width: 100% !important;
+    max-width: 100%;
+  }
+  .resize-handle {
+    display: none;
+  }
+}
+
 @media (max-width: 980px) {
-  .config-panel {
-    grid-template-columns: 1fr 1fr;
-  }
-  .info-block {
-    grid-column: 1 / -1;
-  }
   .status {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .chrome-tab {
+    font-size: 12px;
+    padding: 7px 14px;
   }
 }
 
@@ -697,6 +872,7 @@ html, body {
 .set-notation {
   display: inline-flex;
   align-items: center;
+  flex-wrap: nowrap;
   gap: 6px;
   padding: 6px 10px;
   border: 1px solid var(--line);
@@ -723,11 +899,6 @@ html, body {
   white-space: nowrap;
 }
 
-.set-notation .brace {
-  font-size: 28px;
-  color: var(--text-dim);
-  font-weight: 400;
-}
 
 .set-notation .sep {
   color: var(--text-dim);
@@ -852,17 +1023,19 @@ html, body {
 
 .formula-select {
   font-family: inherit;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text);
   background: var(--bg-1);
   border: 1px solid var(--line-2);
   border-radius: 4px;
-  padding: 4px 10px;
+  padding: 4px 8px;
   outline: none;
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  max-width: 160px;
+  width: 100%;
 }
 .formula-select:hover {
   background: var(--bg-2);
@@ -903,8 +1076,8 @@ html, body {
   color: var(--text-dim);
   padding: 6px 14px;
   font: inherit;
-  font-size: 14px;
-  letter-spacing: 1px;
+  font-size: 13.5px;
+  letter-spacing: normal;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
@@ -939,4 +1112,66 @@ html, body {
   color: #24292e;
   margin: 0;
   white-space: pre-wrap;
+}
+
+/* Compact rendering for belief states — horizontal S1, S2 ... */
+.belief-states-container {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 5px;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.belief-states-container .mini-board {
+  grid-template-columns: repeat(3, 20px) !important;
+  grid-template-rows: repeat(3, 20px) !important;
+  gap: 2px !important;
+  padding: 2px !important;
+}
+
+.belief-states-container .mini-board .mini-cell {
+  font-size: 11px !important;
+  border-radius: 2px !important;
+}
+
+.belief-states-container .mini-board .mini-cell.blank {
+  border-width: 1px !important;
+}
+
+.reached-belief-box {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  padding: 2px !important;
+  gap: 3px !important;
+}
+
+.reached-belief-box span {
+  font-size: 11px !important;
+}
+
+.reached-belief-box .reached-label {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  margin-left: 2px;
+}
+
+.set-notation .brace {
+  font-size: 20px !important;
+  color: var(--text-dim);
+  font-weight: 400;
+  vertical-align: middle;
+}
+
+.boards-container {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#goals-container {
+  max-width: 400px;
 }
